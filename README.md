@@ -19,3 +19,25 @@
 * Hardware constraint
 * dataset choice
 * How to deploy the model
+
+## Dataset
+
+### GID-15
+110 7200x6800 pictures, 100 train 10 val
+
+cut into blocks of 512×512 size
+
+#### all label:
+ ['industrial_land', 'urban_residential', 'rural_residential',
+'traffic_land', 'paddy_field', 'irrigated_land', 'dry_cropland',
+'garden_plot', 'arbor_woodland', 'shrub_land', 'natural_grassland',
+'artificial_grassland', 'river', 'lake', 'pond', 'unknown']
+
+#### converted label
+0: low vegetable: paddy_field,irrigated_land,natural_grassland,artificial_grassland
+
+1: high vegetable: arbor_woodland
+
+2: others: others
+
+3: unknown: label 0
