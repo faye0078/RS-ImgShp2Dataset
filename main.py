@@ -2,10 +2,9 @@ import os
 import torch
 import numpy as np
 import random
-# os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 from config import obtain_retrain_args
 from trainer import Trainer
-from engine.head_trainer import headTrainer
 
 # 为每个卷积层搜索最适合它的卷积实现算法
 # torch.backends.cudnn.benchmark=True
@@ -19,22 +18,9 @@ def setup_seed(seed):
 def main():
     args = obtain_retrain_args()
     args.cuda = torch.cuda.is_available()
-    if args.cuda:
-        try:
-            args.gpu_ids = [int(s) for s in args.gpu_ids.split(',')]
-        except ValueError:
-            raise ValueError('Argument --gpu_ids must be a comma-separated list of integers only')
-
-    if args.sync_bn is None:
-        if args.cuda and len(args.gpu_ids) > 1:
-            args.sync_bn = True
-        else:
-            args.sync_bn = False
-            
     setup_seed(args.seed)
     trainer = Trainer(args)
     print('Total Epoches:', trainer.args.epochs)
-
     for epoch in range(trainer.start_epoch, trainer.args.epochs):
         trainer.training(epoch)
         trainer.validation(epoch)

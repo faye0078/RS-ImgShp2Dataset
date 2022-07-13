@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from rl.genotypes import AGG_OP_NAMES, OP_NAMES, OP_NAMES_WACV
+from model.Fast_NAS.rl.genotypes import AGG_OP_NAMES, OP_NAMES, OP_NAMES_WACV
 from .layer_factory import AGG_OPS, OPS, conv_bn_relu, conv3x3
 
 

@@ -87,8 +87,8 @@
     ],
     "num_agg_ops": 2,
     "num_classes": [
-        4,
-        4
+        3,
+        3
     ],
     "num_epochs": 20000,
     "num_ops": 11,

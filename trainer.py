@@ -5,25 +5,26 @@ from tqdm import tqdm
 import cv2
 import torch
 from collections import OrderedDict
-from search.loss import SegmentationLosses
-from dataloaders import make_data_loader
+from utils.loss import SegmentationLosses
+from data import make_data_loader
 # from decoder import Decoder
-from search.lr_scheduler import LR_Scheduler
-from retrain.saver import Saver
-# from utils.summaries import TensorboardSummary
-from search.evaluator import Evaluator
+from utils.lr_scheduler import LR_Scheduler
+from utils.saver import Saver
+from utils.evaluator import Evaluator
 from model.UNet import U_Net
-from search.copy_state_dict import copy_state_dict
+from utils.copy_state_dict import copy_state_dict
+from model.HRNet import get_seg_model
+from model.make_fast_nas import fastNas
 
 import sys
 sys.path.append("./apex")
 import sys
 sys.path.append("..")
-try:
-    from apex import amp
-    APEX_AVAILABLE = True
-except ModuleNotFoundError:
-    APEX_AVAILABLE = False
+# try:
+#     from apex import amp
+#     APEX_AVAILABLE = True
+# except ModuleNotFoundError:
+#     APEX_AVAILABLE = False
 
 class Trainer(object):
     def __init__(self, args):
@@ -32,56 +33,25 @@ class Trainer(object):
         # 定义保存
         self.saver = Saver(args)
         self.saver.save_experiment_config()
-        # 可视化
-        # self.summary = TensorboardSummary(self.saver.experiment_dir)
-        # self.writer = self.summary.create_summary()
         # 使用amp
+        APEX_AVAILABLE = False
         self.use_amp = True if (APEX_AVAILABLE and args.use_amp) else False
         self.opt_level = args.opt_level
 
         # 定义dataloader
         kwargs = {'num_workers': args.num_worker, 'pin_memory': True, 'drop_last':True}
-        self.train_loader, self.val_loader, self.test_loader, self.nclass = make_data_loader(args, **kwargs)
+        self.train_loader, self.val_loader, self.test_loader = make_data_loader(args, **kwargs)
+        self.nclass = args.nclass
 
 
         self.criterion = SegmentationLosses(weight=None, cuda=args.cuda).build_loss(mode=args.loss_type)
 
         torch.cuda.empty_cache()
         # 定义网络
-        if args.model_name == 'one_path':
-            model = Onepath_Autodeeplab(args)
-        elif args.model_name =='multi':
-            model = Multi_Autodeeplab(args)
-        elif args.model_name == 'MACUNet':
-            model = MACUNet(4, 5)
-        elif args.model_name == 'MAResUNet':
-            model = MAResUNet(4, 5)
-        elif args.model_name == 'MSFCN':
-            model = MSFCN2D(1, 4, 5)
-        elif args.model_name == 'hrnet':
+        if args.model_name == 'hrnet':
             model = get_seg_model(args)
-        elif args.model_name == 'deeplabv3plus':
-            model = DeepLabv3_plus(4, 5)
-        elif args.model_name == 'pspnet':
-            model = build_network(args)
-        elif args.model_name == 'unet':
-            model = U_Net(4, 5)
-        elif args.model_name == 'refinenet':
-            model = rf101(4, 5)
         elif args.model_name == 'fast-nas':
             model = fastNas()
-        elif args.model_name == 'SrNet':
-            model = SrNet(4, fastNas())
-        elif args.model_name == 'flexinet':
-            layers = np.ones([14, 4])
-            cell_arch = np.load(
-                '/media/dell/DATA/wy/Seg_NAS/model/model_encode/GID-5/14layers_mixedcell1_3operation/cell_operations_0.npy')
-            connections = np.load(
-                '/media/dell/DATA/wy/Seg_NAS/model/model_encode/GID-5/14layers_mixedcell1_3operation/third_connect_4.npy')
-            # connections = get_connections()
-
-            model = RetrainNet(layers, 4, connections, cell_arch, self.args.dataset, self.nclass, 'normal')
-            # model = Fusion_RetrainNet(layers, 4, connections, cell_arch, self.args.dataset, self.nclass, 'normal')
 
         optimizer = torch.optim.SGD(
                 model.parameters(),
