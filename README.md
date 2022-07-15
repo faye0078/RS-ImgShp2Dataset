@@ -6,6 +6,8 @@
 
 [PIDNet](https://arxiv.org/pdf/2206.02066v2.pdf):      [code](https://github.com/XuJiacong/PIDNet)
 
+![PIDNet](./images/PIDNet.png)
+
 [SFNet-R18](https://arxiv.org/pdf/2002.10120v3.pdf):    [code](https://github.com/lxtGH/SFSegNets)
 
 [PP-LiteSeg](https://arxiv.org/pdf/2204.02681v1.pdf):     [code](https://github.com/xiaomingnio/pp_liteseg_pytorch)

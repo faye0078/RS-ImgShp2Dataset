@@ -1,5 +1,5 @@
 from model.Fast_NAS.nn.encoders import create_encoder
-from model.Fast_NAS.nn.micro_decoders import MicroDecoder as Decoder
+from model.Fast_NAS.nn.train_decoder import MicroDecoder as Decoder
 from torch import nn
 
 class Segmenter(nn.Module):

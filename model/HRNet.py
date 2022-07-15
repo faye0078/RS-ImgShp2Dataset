@@ -451,6 +451,8 @@ class HighResolutionNet(nn.Module):
         return nn.Sequential(*modules), num_inchannels
 
     def forward(self, x):
+        w = x.shape[-1]
+        h = x.shape[-2]
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -499,7 +501,7 @@ class HighResolutionNet(nn.Module):
 
         x = self.last_layer(x)
 
-        x = F.interpolate(x, size=torch.Size([512, 512]), mode='bilinear', align_corners=True)
+        x = F.interpolate(x, size=(h, w), mode='bilinear', align_corners=True)
 
         return x
 
@@ -524,7 +526,7 @@ class HighResolutionNet(nn.Module):
             self.load_state_dict(model_dict)
 
 
-def get_seg_model(args):
+def get_HRNet_model(args):
     model = HighResolutionNet(args)
     model.init_weights('')
     return model

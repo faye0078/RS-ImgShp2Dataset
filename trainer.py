@@ -13,18 +13,19 @@ from utils.saver import Saver
 from utils.evaluator import Evaluator
 from model.UNet import U_Net
 from utils.copy_state_dict import copy_state_dict
-from model.HRNet import get_seg_model
+from model.HRNet import get_HRNet_model
 from model.make_fast_nas import fastNas
+from model.PIDNet import get_PID_model
 
 import sys
 sys.path.append("./apex")
 import sys
 sys.path.append("..")
-# try:
-#     from apex import amp
-#     APEX_AVAILABLE = True
-# except ModuleNotFoundError:
-#     APEX_AVAILABLE = False
+try:
+    from apex import amp
+    APEX_AVAILABLE = True
+except ModuleNotFoundError:
+    APEX_AVAILABLE = False
 
 class Trainer(object):
     def __init__(self, args):
@@ -34,7 +35,6 @@ class Trainer(object):
         self.saver = Saver(args)
         self.saver.save_experiment_config()
         # 使用amp
-        APEX_AVAILABLE = False
         self.use_amp = True if (APEX_AVAILABLE and args.use_amp) else False
         self.opt_level = args.opt_level
 
@@ -49,9 +49,11 @@ class Trainer(object):
         torch.cuda.empty_cache()
         # 定义网络
         if args.model_name == 'hrnet':
-            model = get_seg_model(args)
+            model = get_HRNet_model(args)
         elif args.model_name == 'fast-nas':
             model = fastNas()
+        elif args.model_name == 'PIDNet':
+            model = get_PID_model(args)
 
         optimizer = torch.optim.SGD(
                 model.parameters(),
@@ -144,20 +146,6 @@ class Trainer(object):
 
             train_loss += loss.item()
             tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
-
-        if not self.args.val:
-            # save checkpoint every epoch
-            is_best = False
-            if torch.cuda.device_count() > 1:
-                state_dict = self.model.module.state_dict()
-            else:
-                state_dict = self.model.state_dict()
-            self.saver.save_checkpoint({
-                'epoch': epoch + 1,
-                'state_dict': state_dict,
-                'optimizer': self.optimizer.state_dict(),
-                'best_pred': self.best_pred,
-            }, is_best)
 
 
     def validation(self, epoch):
