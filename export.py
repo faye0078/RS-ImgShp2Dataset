@@ -3,7 +3,7 @@ import torchvision
 import os
 from model.HRNet import get_seg_model
 from model.make_fast_nas import fastNas
-from config import obtain_retrain_args
+from utils.config import obtain_retrain_args
 # An instance of your model.
 
 args = obtain_retrain_args()

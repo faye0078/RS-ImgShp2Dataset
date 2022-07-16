@@ -4,7 +4,7 @@ from data.GID_Vege_5bands import GIDVege5
 from torch.utils.data import DataLoader, random_split
 import sys
 sys.path.append("../")
-from utils.Path import get_data_path
+from utils.Path import get_train_path, get_predict_path
 from data.transforms import (
     CentralCrop,
     Normalise,
@@ -14,8 +14,8 @@ from data.transforms import (
     ToTensor,
 )
 from torchvision import transforms
-def make_data_loader(args, **kwargs):
-    data_path = get_data_path(args.dataset)
+def make_train_loader(args, **kwargs):
+    data_path = get_train_path(args.dataset)
     if args.dataset == 'GID-Vege3':
         Dataset = GIDVege3
     elif args.dataset == 'GID-Vege4':
@@ -81,3 +81,26 @@ def make_data_loader(args, **kwargs):
         return train_loader, val_loader, test_loader
     elif args.nas == 'search':
         return train_loader1, train_loader2, val_loader
+
+def make_predict_loader(args, **kwargs):
+    data_path = get_predict_path(args.dataset)
+    if args.dataset == 'GID-Vege3':
+        Dataset = GIDVege3
+    elif args.dataset == 'GID-Vege4':
+        Dataset = GIDVege4
+    elif args.dataset == 'GID-Vege5':
+        Dataset = GIDVege5
+    composed_test = transforms.Compose(
+        [
+            CentralCrop(args.crop_size),
+            ToTensor(),
+        ])
+
+    test_set = Dataset(stage="test",
+                    data_file=data_path['test_list'],
+                    data_dir=data_path['dir'],
+                    transform_test=composed_test,)
+
+    print(" Created test set = {} examples".format(len(test_set)))
+    test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, **kwargs)
+    return test_loader

@@ -29,7 +29,7 @@ def concat(dirname, imgs, imgsize):
     return sum_img
 
 
-label_dir = "/media/dell/DATA/wy/Seg_NAS/run/GID/predict_gid15/hrnet/experiment_0/"
+label_dir = "/media/dell/DATA/wy/LightRS/run/GID-Vege5/predict/PIDNet/experiment_0/"
 for dirpath, dirnames, filenames in os.walk(label_dir):
     imgs = OrderedDict()
     if len(filenames) == 0:
@@ -39,5 +39,5 @@ for dirpath, dirnames, filenames in os.walk(label_dir):
         label = cv2.imread(label_path)
         imgs[filename] = label
     sum_img = concat(dirpath.split("/")[-1], imgs, [6800, 7200,3])
-    cv2.imwrite('/media/dell/DATA/wy/Seg_NAS/run/GID/predict_gid15/hrnet/' + dirpath.split("/")[-1] + '.png' , sum_img)
+    cv2.imwrite('/media/dell/DATA/wy/LightRS/run/GID-Vege5/predict/PIDNet/' + dirpath.split("/")[-1] + '.png' , sum_img)
 

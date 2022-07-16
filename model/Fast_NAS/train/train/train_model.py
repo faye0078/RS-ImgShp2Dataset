@@ -8,7 +8,7 @@ from default_args import *
 from layer_factory import conv_bn_relu6, InvertedResidual
 from loaders import create_loaders
 from utils import TaskPerformer, init_polyak, apply_polyak
-from trainer import populate_task0, create_optimisers, train_task0, train_segmenter
+from engine.trainer import populate_task0, create_optimisers, train_task0, train_segmenter
 # from engine.inference import validate
 model_paths = {"mbv2_voc": "./data/weights/mbv2_voc_rflw.ckpt"}
 class MobileNetV2(nn.Module):

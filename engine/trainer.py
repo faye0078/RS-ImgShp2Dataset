@@ -6,7 +6,7 @@ import cv2
 import torch
 from collections import OrderedDict
 from utils.loss import SegmentationLosses
-from data import make_data_loader
+from data import make_train_loader
 # from decoder import Decoder
 from utils.lr_scheduler import LR_Scheduler
 from utils.saver import Saver
@@ -40,7 +40,7 @@ class Trainer(object):
 
         # 定义dataloader
         kwargs = {'num_workers': args.num_worker, 'pin_memory': True, 'drop_last':True}
-        self.train_loader, self.val_loader, self.test_loader = make_data_loader(args, **kwargs)
+        self.train_loader, self.val_loader, self.test_loader = make_train_loader(args, **kwargs)
         self.nclass = args.nclass
 
 
@@ -273,38 +273,20 @@ class Trainer(object):
             target = target.cpu().numpy()
             pred = np.argmax(pred, axis=1)
             pred = np.squeeze(pred)
-            lut = get_GID_lut()
+            lut = get_GID_vege_lut()
             img = lut[pred]
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            name = sample["name"][0].split("/")[-1]
+            name = sample["name"][0]
 
-            gt_label_name = "/media/dell/DATA/wy/data/512/rgb_label/" + name
-            gt_label = cv2.imread(gt_label_name)
-            H, W, C = gt_label.shape
-            img[np.all(gt_label == (int(0), int(0), int(0)), axis=-1)] = (0, 0, 0)
+            squeeze_target = target.squeeze()
+            img[squeeze_target == 255] = (0, 0, 0)
 
             self.saver.save_img(img, name)
               
-def get_GID_lut():
+def get_GID_vege_lut():
     lut = np.zeros((512,3), dtype=np.uint8)
-    lut[0] = [255,0,0]
-    lut[1] =  [0,255,0]
-    lut[2] =  [0,255,255]
-    lut[3] =  [255,255,0]
-    lut[4] =  [0,0,255]
-    return lut
-def get_uadataset_lut():
-    lut = np.zeros((512,3), dtype=np.uint8)
-    lut[0] = [219, 95, 87]
-    lut[1] = [219, 151, 87]
-    lut[2] = [219, 208, 87]
-    lut[3] = [173, 219, 87]
-    lut[4] = [117, 219, 87]
-    lut[5] = [123, 196, 123]
-    lut[6] = [88, 177, 88]
-    lut[7] = [0, 128, 0]
-    lut[8] = [88, 176, 167]
-    lut[9] = [153, 93, 19]
-    lut[10] = [87, 155, 219]
-    lut[11] = [0, 98, 255]
+    lut[0] = [0,255,0]
+    lut[1] =  [255, 0, 0]
+    lut[2] =  [153,102,51]
+    lut[3] =  [0,0,0]
     return lut
