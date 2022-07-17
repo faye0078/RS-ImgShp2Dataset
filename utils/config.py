@@ -6,15 +6,15 @@ NORMALISE_PARAMS = [1.0 / 255,  # SCALE
                     ]
 def obtain_retrain_args():
     parser = argparse.ArgumentParser(description="ReTrain the nas model")
-    parser.add_argument('--dataset', type=str, default='GID-Vege5', choices=['GID-Vege3', 'GID-Vege4', 'GID-Vege5'], help='dataset name (default: pascal)')
-    parser.add_argument('--model_name', type=str, default='PIDNet', choices=['hrnet', 'flexinet', 'fast-nas', 'PIDNet'], help='the model name')
+    parser.add_argument('--dataset', type=str, default='GID-Vege4', choices=['GID-Vege3', 'GID-Vege4', 'GID-Vege5'], help='dataset name (default: pascal)')
+    parser.add_argument('--model_name', type=str, default='fast-nas', choices=['hrnet', 'flexinet', 'fast-nas', 'PIDNet'], help='the model name')
     parser.add_argument('--nas', type=str, default='train', choices=['search', 'train'])
     parser.add_argument('--workers', type=int, default=0, metavar='N', help='dataloader threads')
-    parser.add_argument('--resume', type=str, default='/media/dell/DATA/wy/LightRS/run/GID-Vege5/PIDNet/experiment_3/epoch96_checkpoint.pth.tar', help='put the path to resuming file if needed')
-    parser.add_argument('--checkname', type=str, default='predict/PIDNet', help='set the checkpoint name')
+    parser.add_argument('--resume', type=str, default= None, help='put the path to resuming file if needed')
+    parser.add_argument('--checkname', type=str, default='fast-nas', help='set the checkpoint name')
     parser.add_argument('--epochs', type=int, default=200, metavar='N', help='number of epochs to train (default: auto)')
     parser.add_argument('--num_worker', type=int, default=4,metavar='N', help='numer workers')
-    parser.add_argument('--batch-size', type=int, default=1, metavar='N', help='input batch size for training (default: auto)')
+    parser.add_argument('--batch-size', type=int, default=24, metavar='N', help='input batch size for training (default: auto)')
     parser.add_argument('--nclass', type=int, default=3,help='number of class')
 
     parser.add_argument('--affine', default=False, type=bool, help='whether use affine in BN')

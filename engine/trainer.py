@@ -204,20 +204,6 @@ class Trainer(object):
                 'best_pred': self.best_pred,
             }, is_best, 'epoch{}_checkpoint.pth.tar'.format(str(epoch + 1)))
 
-            self.test_model(epoch)
-        if new_pred > 0.925:
-            if torch.cuda.device_count() > 1:
-                state_dict = self.model.module.state_dict()
-            else:
-                state_dict = self.model.state_dict()
-            self.saver.save_checkpoint({
-                'epoch': epoch + 1,
-                'state_dict': state_dict,
-                'optimizer': self.optimizer.state_dict(),
-                'best_pred': self.best_pred,
-            }, False, 'epoch{}_checkpoint.pth.tar'.format(str(epoch + 1)))
-
-            self.test_model(epoch)
         self.saver.save_train_info(test_loss, epoch, Acc, mIoU, FWIoU, IoU, is_best)
 
     def test_model(self, epoch):
