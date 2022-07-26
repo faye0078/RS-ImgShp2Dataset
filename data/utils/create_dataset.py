@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import cv2
 import os
+import glob
 ['industrial_land', 'urban_residential', 'rural_residential',
  'traffic_land', 'paddy_field', 'irrigated_land',
   'dry_cropland', 'garden_land', 'arbor_woodland',
@@ -14,7 +15,11 @@ def gid2Vege(label_dir):
     for dirpath, dirnames, filenames in os.walk(label_dir):
         for filename in filenames:
             label_path = os.path.join(dirpath, filename)
+            if "tif" in label_path:
+                continue
             label = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
+            label[label==0] = 255
+            label = label - 1
             target_label = np.zeros(label.shape)
             target_label[label == 4] = 0
             target_label[label == 5] = 0
@@ -32,7 +37,7 @@ def gid2Vege(label_dir):
             target_label[label == 13] = 2
             target_label[label == 14] = 2
 
-            target_label[label == 255] = 255
+            target_label[label > 15] = 255
             target_label[label == 7] = 255
             target_label[label == 9] = 255
             target_label = target_label.astype(np.uint)
@@ -41,6 +46,17 @@ def gid2Vege(label_dir):
             if not os.path.exists(target_path):
                 os.makedirs(target_path)
             cv2.imwrite(target_path + label_name, target_label)
+
+def make_concat_lst(data_path):
+    imgs = glob.glob(('{}*.tif'.format(data_path)))
+    file = []
+    for img in imgs:
+        img = img.replace('/media/dell/DATA/wy/data/gid-15/GID/img_dir/val/', 'image_NirRGB/')
+        label = img.replace('image_NirRGB/', 'Vege_label/').replace('.tif', '_15label.png')
+        file.append(img + '\t' + label)
+    df = pd.DataFrame(file, columns=['one'])
+    # df = df.sample(frac=0.05, random_state=1)
+    df.to_csv("/media/dell/DATA/wy/LightRS/data/list/concat/gid15_vege4_val.lst", columns=['one'], index=False, header=False)
 
 def changeFile():
     file = open("/media/dell/DATA/wy/LightRS/data/list/gid15_vege3_val.lst", "r", encoding='UTF-8')
@@ -54,6 +70,6 @@ def changeFile():
 
     file.close()
 
-changeFile()
-
-# gid2Vege('/media/dell/DATA/wy/data/GID-15/512/label')
+# changeFile()
+# gid2Vege('/media/dell/DATA/wy/data/GID-15/GID/label')
+make_concat_lst("/media/dell/DATA/wy/data/gid-15/GID/img_dir/val/")

@@ -42,8 +42,8 @@ class GIDVege3(Dataset):
         self.transform_val = transform_val
         self.transform_test = transform_test
         self.stage = stage
-
-
+        self.mean = (0.485, 0.456, 0.406)
+        self.std = (0.229, 0.224, 0.225)
 
     def set_config(self, crop_size, resize_side):
         self.transform_trn.transforms[0].resize_side = resize_side
@@ -57,7 +57,13 @@ class GIDVege3(Dataset):
         msk_name = os.path.join(self.root_dir, self.datalist[idx][1])
 
         image = np.asarray(Image.open(img_name), dtype=np.float64)
+        image = image / 255.0
+        image = image-self.mean
+        image = image / self.std
+
         mask = np.array(Image.open(msk_name))
+        # if img_name != msk_name:
+        #     assert len(mask.shape) == 2, "Masks must be encoded without colourmap"
         sample = {"image": image, "mask": mask, "name": self.datalist[idx][1]}
         if self.stage == "train":
             if self.transform_trn:

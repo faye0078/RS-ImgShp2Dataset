@@ -22,7 +22,7 @@ class PIDNet(nn.Module):
         
         # I Branch
         self.conv1 =  nn.Sequential(
-                          nn.Conv2d(5, planes,kernel_size=3, stride=2, padding=1),
+                          nn.Conv2d(3, planes,kernel_size=3, stride=2, padding=1),
                           BatchNorm2d(planes, momentum=bn_mom),
                           nn.ReLU(inplace=True),
                           nn.Conv2d(planes,planes,kernel_size=3, stride=2, padding=1),

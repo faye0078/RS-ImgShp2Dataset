@@ -58,9 +58,6 @@ class GIDVege4(Dataset):
         msk_name = os.path.join(self.root_dir, self.datalist[idx][1])
 
         image = np.asarray(Image.open(img_name), dtype=np.float64)
-        ndvi = (image[:, :, 0] - image[:, :, 3]) / ((image[:, :, 0] + image[:, :, 3])+0.0001)
-        ndvi[ndvi>1] = 1
-        ndvi[ndvi<-1] = -1
         image = image / 255.0
         image = image-self.mean
         image = image / self.std

@@ -5,7 +5,8 @@ from tqdm import tqdm
 import cv2
 import torch
 from utils.loss import SegmentationLosses
-from data import make_predict_loader
+from data import make_predict_split_loader, make_predict_concat_loader
+from data.concat import recons_prob_map
 # from decoder import Decoder
 from utils.lr_scheduler import LR_Scheduler
 from utils.saver import Saver
@@ -34,10 +35,9 @@ class Predictor(object):
         # 使用amp
         self.use_amp = True if (APEX_AVAILABLE and args.use_amp) else False
         self.opt_level = args.opt_level
-
         # 定义dataloader
-        kwargs = {'num_workers': args.num_worker, 'pin_memory': True, 'drop_last':True}
-        self.test_loader = make_predict_loader(args, **kwargs)
+        self.kwargs = {'num_workers': args.num_worker, 'pin_memory': True, 'drop_last':True}
+        self.test_loader = None
         self.nclass = args.nclass
         self.criterion = SegmentationLosses(weight=None, cuda=args.cuda).build_loss(mode=args.loss_type)
         torch.cuda.empty_cache()
@@ -73,8 +73,8 @@ class Predictor(object):
                                             device=module.running_var.device), requires_grad=False)
 
             # print(keep_batchnorm_fp32)
-            self.model, [self.optimizer] = amp.initialize(
-                self.model, [self.optimizer], opt_level=self.opt_level,
+            self.model = amp.initialize(
+                self.model, opt_level=self.opt_level,
                 keep_batchnorm_fp32=keep_batchnorm_fp32, loss_scale="dynamic")
             print('cuda finished')
 
@@ -86,13 +86,13 @@ class Predictor(object):
             checkpoint = torch.load(args.resume)
             self.start_epoch = checkpoint['epoch']
             self.model.load_state_dict(checkpoint['state_dict'],  strict=False)
-            copy_state_dict(self.optimizer.state_dict(), checkpoint['optimizer'])
             self.best_pred = checkpoint['best_pred']
             print(self.best_pred)
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
 
     def split_predict(self):
+        self.test_loader = make_predict_split_loader(self.args, **self.kwargs)
         self.model.eval()
         self.evaluator.reset()
         tbar = tqdm(self.test_loader, desc='\r', ncols=80)
@@ -102,8 +102,7 @@ class Predictor(object):
                 image, target = sample['image'], sample['mask']
                 if self.args.cuda:
                     image, target = image.cuda().float(), target.cuda().float()
-                with torch.no_grad():
-                    output = self.model(image)
+                output = self.model(image)
                 loss = self.criterion(output, target)
                 test_loss += loss.item()
                 tbar.set_description('Test loss: %.3f' % (test_loss / (i + 1)))
@@ -116,53 +115,41 @@ class Predictor(object):
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
                 name = sample["name"][0]
                 # 黑色填充
-                squeeze_target = target.squeeze()
-                img[squeeze_target == 255] = (0, 0, 0)
-
+                # squeeze_target = target.squeeze()
+                # img[squeeze_target == 255] = (0, 0, 0)
                 self.saver.save_img(img, name)
 
     def concat_predict(self):
         # 推理过程主循
+        self.test_loader = make_predict_concat_loader(self.args, **self.kwargs)
         self.model.eval()
         self.evaluator.reset()
         tbar = tqdm(self.test_loader, desc='\r', ncols=80)
-        test_loss = 0.0
         with torch.no_grad():
-            for i, sample in enumerate(tbar):
-                image, target = sample['image'], sample['mask']
+            for image, target, name in tbar:
                 if self.args.cuda:
                     image, target = image.cuda().float(), target.cuda().float()
-                with torch.no_grad():
-                    output = self.model(image)
-                loss = self.criterion(output, target)
-                test_loss += loss.item()
-                tbar.set_description('Test loss: %.3f' % (test_loss / (i + 1)))
-                pred = output.data.cpu().numpy()
+                    
+                shape = image.shape
+                pred = torch.zeros(size=(shape[0], 3, *shape[2:]))
+                for i in range(0, shape[0], self.args.infer_batch_size):
+                    pred[i:i+self.args.infer_batch_size] = self.model(image[i:i+self.args.infer_batch_size])
+                # 取softmax结果的第1（从0开始计数）个通道的输出作为变化概率
+                # 由patch重建完整概率图
+                # 默认将阈值设置为0.5，即，将变化概率大于0.5的像素点分为变化类
+                # out = quantize(prob > self.args["THRESHOLD"])
+                pred = pred.data.cpu().numpy()
                 target = target.cpu().numpy()
-                pred = np.argmax(pred, axis=1)
+                pred = recons_prob_map(pred, self.args.origin_size, self.args.crop_size, self.args.stride)
+                pred = np.argmax(pred, axis=0)
                 pred = np.squeeze(pred)
                 lut = get_GID_vege_lut()
                 img = lut[pred]
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-                name = sample["name"][0]
                 # 黑色填充
-                squeeze_target = target.squeeze()
-                img[squeeze_target == 255] = (0, 0, 0)
-
-                self.saver.save_img(img, name)
-                shape = image.shape
-                pred = torch.zeros(shape[-2:])
-                for i in range(0, shape[0], self.args.predict_batch_size):
-                    pred[i:i+self.args["INFER_BATCH_SIZE"]] = self.model(image[i:i+self.args["INFER_BATCH_SIZE"]])
-                # 取softmax结果的第1（从0开始计数）个通道的输出作为变化概率
-                prob = paddle.nn.functional.softmax(pred, axis=1)[:, 1]
-                # 由patch重建完整概率图
-                prob = recons_prob_map(prob.numpy(), self.args["ORIGINAL_SIZE"], self.args["CROP_SIZE"], self.args["STRIDE"])
-                # 默认将阈值设置为0.5，即，将变化概率大于0.5的像素点分为变化类
-                out = quantize(prob > self.args["THRESHOLD"])
-                imsave(osp.join(out_dir, name), out, check_contrast=False)
-
-        info("模型推理完成")
+                # squeeze_target = target.squeeze()
+                # img[squeeze_target == 255] = (0, 0, 0)
+                # self.saver.save_img(img, name[0])
 
 def get_GID_vege_lut():
     lut = np.zeros((512,3), dtype=np.uint8)
@@ -171,13 +158,3 @@ def get_GID_vege_lut():
     lut[2] =  [153,102,51]
     lut[3] =  [0,0,0]
     return lut
-
-if __name__ == '__main__':
-    # 命令行读取yaml文件名
-    parser = argparse.ArgumentParser(description='Model training')
-    parser.add_argument("--config", dest="cfg", help="The config file.", default='./experiment/BIT.yml', type=str)
-    # 读取yaml参数
-    args = parser.parse_args()
-    args = _parse_from_yaml(args.cfg)
-
-    test_trainer = Predictor(args)

@@ -2,6 +2,7 @@ from data.GID_Vege_3bands import GIDVege3
 from data.GID_Vege_4bands import GIDVege4
 from data.GID_Vege_5bands import GIDVege5
 from torch.utils.data import DataLoader, random_split
+from data.concat import crop_patches
 import sys
 sys.path.append("../")
 from utils.Path import get_train_path, get_predict_path
@@ -83,8 +84,8 @@ def make_train_loader(args, **kwargs):
         print(" Created train setA = {} examples, train setB = {}, val set = {} examples".format(len(train_set1), len(train_set2), len(val_set)))
         return train_loader1, train_loader2, val_loader
 
-def make_predict_loader(args, **kwargs):
-    data_path = get_predict_path(args.dataset)
+def make_predict_split_loader(args, **kwargs):
+    data_path = get_predict_path(args.dataset, args.mode)
     if args.dataset == 'GID-Vege3':
         Dataset = GIDVege3
     elif args.dataset == 'GID-Vege4':
@@ -105,3 +106,33 @@ def make_predict_loader(args, **kwargs):
     print(" Created test set = {} examples".format(len(test_set)))
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, **kwargs)
     return test_loader
+
+def make_predict_concat_loader(args, **kwargs):
+    data_path = get_predict_path(args.dataset, args.mode)
+    if args.dataset == 'GID-Vege3':
+        Dataset = GIDVege3
+    elif args.dataset == 'GID-Vege4':
+        Dataset = GIDVege4
+    elif args.dataset == 'GID-Vege5':
+        Dataset = GIDVege5
+    composed_test = transforms.Compose(
+        [
+            # CentralCrop(args.crop_size),
+            ToTensor(),
+        ])
+
+    test_set = Dataset(stage="test",
+                    data_file=data_path['test_list'],
+                    data_dir=data_path['dir'],
+                    transform_test=composed_test,)
+
+    print(" Created test set = {} examples".format(len(test_set)))
+    test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, **kwargs)
+
+    test_dataloader = crop_patches(
+        test_loader,
+        args.origin_size,
+        args.crop_size,
+        args.stride
+    )
+    return test_dataloader
