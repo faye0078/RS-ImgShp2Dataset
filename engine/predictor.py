@@ -126,20 +126,22 @@ class Predictor(object):
         self.evaluator.reset()
         tbar = tqdm(self.test_loader, desc='\r', ncols=80)
         with torch.no_grad():
-            for image, target, name in tbar:
+            for sample in tbar:
                 if self.args.cuda:
-                    image, target = image.cuda().float(), target.cuda().float()
-                    
+                    image = sample[0].cuda().float()
+                    if len(sample) == 3:
+                        target = sample[1].cuda().float()
+
                 shape = image.shape
+                self.args.origin_size = shape[2:] # TODO
                 pred = torch.zeros(size=(shape[0], 3, *shape[2:]))
+                
                 for i in range(0, shape[0], self.args.infer_batch_size):
                     pred[i:i+self.args.infer_batch_size] = self.model(image[i:i+self.args.infer_batch_size])
-                # 取softmax结果的第1（从0开始计数）个通道的输出作为变化概率
-                # 由patch重建完整概率图
-                # 默认将阈值设置为0.5，即，将变化概率大于0.5的像素点分为变化类
-                # out = quantize(prob > self.args["THRESHOLD"])
                 pred = pred.data.cpu().numpy()
-                target = target.cpu().numpy()
+
+                if len(sample) == 3:
+                    target = target.cpu().numpy()
                 pred = recons_prob_map(pred, self.args.origin_size, self.args.crop_size, self.args.stride)
                 pred = np.argmax(pred, axis=0)
                 pred = np.squeeze(pred)

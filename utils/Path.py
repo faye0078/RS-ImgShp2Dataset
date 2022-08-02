@@ -51,6 +51,7 @@ def get_predict_path(dataset, mode):
         # Path['nas_val_list'] = "./data/lists/GID/mini_rs_val.lst"
     elif dataset == 'Guangzhou':
         Path = OrderedDict()
-        Path["wangyu"] = 'wangyu'
+        Path['dir'] = ""
+        Path["predict_list"] = "" # TODO:路径
 
     return Path

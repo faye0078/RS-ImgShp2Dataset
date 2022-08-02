@@ -1,6 +1,8 @@
+from sympy import im
 from data.GID_Vege_3bands import GIDVege3
 from data.GID_Vege_4bands import GIDVege4
 from data.GID_Vege_5bands import GIDVege5
+from data.guangdong import Guangdong
 from torch.utils.data import DataLoader, random_split
 from data.concat import crop_patches
 import sys
@@ -115,14 +117,16 @@ def make_predict_concat_loader(args, **kwargs):
         Dataset = GIDVege4
     elif args.dataset == 'GID-Vege5':
         Dataset = GIDVege5
+    elif args.dataset == 'Guangdong':
+        Dataset = Guangdong
     composed_test = transforms.Compose(
         [
             # CentralCrop(args.crop_size),
             ToTensor(),
         ])
 
-    test_set = Dataset(stage="test",
-                    data_file=data_path['test_list'],
+    test_set = Dataset(stage="predict",
+                    data_file=data_path['predict_list'],
                     data_dir=data_path['dir'],
                     transform_test=composed_test,)
 

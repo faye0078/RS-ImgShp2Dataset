@@ -62,7 +62,8 @@ def crop_patches(dataloader, ori_size, window_size, stride):
 
     for target in dataloader:
         im = target["image"]
-        mask = target["mask"]
+        if "mask" in target:
+            mask = target["mask"]
         name = target["name"]
         h, w = ori_size
         win_gen = WindowGenerator(h, w, window_size, window_size, stride, stride)
@@ -71,8 +72,10 @@ def crop_patches(dataloader, ori_size, window_size, stride):
             # NOTE: 此处不能使用生成器，否则因为lazy evaluation的缘故会导致结果不是预期的
             patches = im[..., rows, cols]
             all_patches.append(patches)
-
-        yield (torch.concat(all_patches, axis=0), mask, name)
+        if "mask" in target:
+            yield (torch.concat(all_patches, axis=0), mask, name)
+        else:
+            yield (torch.concat(all_patches, axis=0), name)
 
 def recons_prob_map(patches, ori_size, window_size, stride):
     """从裁块结果重建原始尺寸影像，与`crop_patches`相对应"""

@@ -69,7 +69,7 @@ def obtain_predict_args():
     parser.add_argument('--freeze-bn', type=bool, default=False, help='whether to freeze bn parameters (default: False)')
     parser.add_argument('--loss-type', type=str, default='ce', choices=['ce', 'focal'], help='loss func type (default: ce)')
     parser.add_argument('--resize', type=int, default=512, help='resize image size')
-    parser.add_argument('--use_amp', action='store_true', default=True)
+    parser.add_argument('--use_amp', action='store_true', default=False)
     parser.add_argument('--opt_level', type=str, default='O0', choices=['O0', 'O1', 'O2', 'O3'], help='opt level for half percision training (default: O0)')
     parser.add_argument('--start_epoch', type=int, default=0, metavar='N', help='start epochs (default:0)')
     parser.add_argument('--lr', type=float, default=0.025, metavar='LR', help='learning rate (default: auto)')

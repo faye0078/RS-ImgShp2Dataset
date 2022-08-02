@@ -7,7 +7,7 @@ import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 
-class GIDVege3(Dataset):
+class Guangdong(Dataset):
     """Custom Pascal VOC"""
 
     def __init__(self, stage, data_file, data_dir, transform_trn=None, transform_val=None, transform_test=None):
@@ -20,30 +20,22 @@ class GIDVege3(Dataset):
         """
         with open(data_file, "rb") as f:
             datalist = f.readlines()
-        try:
-            # self.datalist = [
-            #     (k, k.replace('image/', 'label/').replace('img.tif', 'label.png'))
-            #     for k in map(
-            #         lambda x: x.decode("utf-8").strip("\n").strip("\r"), datalist
-            #     )
-            # ]
+        if stage == 'predict':
+            self.datalist = [d.decode("utf-8").strip().split(" ") for d in datalist]
+        else:
             self.datalist = [
                 (k[0], k[1])
                 for k in map(
                     lambda x: x.decode("utf-8").strip("\n").strip("\r").split("\t"), datalist
                 )
             ]
-        except ValueError:  # Adhoc for test.
-            self.datalist = [
-                (k, k) for k in map(lambda x: x.decode("utf-8").strip("\n"), datalist)
-            ]
         self.root_dir = data_dir
         self.transform_trn = transform_trn
         self.transform_val = transform_val
         self.transform_test = transform_test
         self.stage = stage
-        self.mean = (0.485, 0.456, 0.406)
-        self.std = (0.229, 0.224, 0.225)
+        self.mean = (0.5, 0.5, 0.5)
+        self.std = (0.25, 0.25, 0.25)
 
     def set_config(self, crop_size, resize_side):
         self.transform_trn.transforms[0].resize_side = resize_side
@@ -57,9 +49,15 @@ class GIDVege3(Dataset):
         msk_name = os.path.join(self.root_dir, self.datalist[idx][1])
 
         image = np.asarray(Image.open(img_name), dtype=np.float64)
-        image = image / 255.0
+        image = image / 255.0 # TODO：这里是否需要除什么？
         image = image - self.mean
         image = image / self.std
+
+        sample = {"image": image, "name": self.datalist[idx][1]}
+        if self.stage == 'predict':
+            if self.transform_test:
+                sample = self.transform_test(sample)
+            return sample
 
         mask = np.array(Image.open(msk_name))
         # if img_name != msk_name:
