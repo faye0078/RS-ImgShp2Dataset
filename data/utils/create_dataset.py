@@ -70,6 +70,16 @@ def changeFile():
 
     file.close()
 
+def make_predict_list(data_path, result_path):
+    imgs = glob.glob(('{}*.tif'.format(data_path)))
+    file = []
+    for img in imgs:
+        img = img.replace('/media/dell/DATA/wy/data/gid-15/GID/img_dir/val/', 'image_NirRGB/')
+        file.append(img)
+    df = pd.DataFrame(file, columns=['one'])
+    df.to_csv(result_path, columns=['one'], index=False, header=False)
+
 # changeFile()
 # gid2Vege('/media/dell/DATA/wy/data/GID-15/GID/label')
-make_concat_lst("/media/dell/DATA/wy/data/gid-15/GID/img_dir/val/")
+# make_concat_lst("/media/dell/DATA/wy/data/gid-15/GID/img_dir/val/")
+make_predict_list(data_path="", result_path="")
