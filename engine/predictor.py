@@ -133,9 +133,9 @@ class Predictor(object):
                         target = sample[1].cuda().float()
 
                 shape = image.shape
-                self.args.origin_size = shape[2:] # TODO
+                # self.args.origin_size = shape[2:] # TODO
                 pred = torch.zeros(size=(shape[0], 3, *shape[2:]))
-                
+
                 for i in range(0, shape[0], self.args.infer_batch_size):
                     pred[i:i+self.args.infer_batch_size] = self.model(image[i:i+self.args.infer_batch_size])
                 pred = pred.data.cpu().numpy()
