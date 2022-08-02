@@ -6,8 +6,6 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 from utils.config import obtain_retrain_args
 from engine.trainer import Trainer
 
-# 为每个卷积层搜索最适合它的卷积实现算法
-# torch.backends.cudnn.benchmark=True
 def setup_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -29,5 +27,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    # args: gpu_id seed epoch dataset nas(阶段：搜索、再训练) use_amp(使用apex)

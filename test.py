@@ -9,9 +9,6 @@ from torchsummary import summary
 from torchstat import stat
 
 
-# 为每个卷积层搜索最适合它的卷积实现算法
-# torch.backends.cudnn.benchmark=True
-
 def main():
     args = obtain_retrain_args()
     args.cuda = torch.cuda.is_available()
@@ -30,8 +27,6 @@ def main():
     print("this model params: " + params)
 
     trainer.validation(0)
-
-
 
 if __name__ == "__main__":
     main()

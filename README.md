@@ -43,3 +43,7 @@ cut into blocks of 512×512 size
 2: others: others
 
 3: unknown: label 0
+
+
+
+城市绿化、城市森林、农田

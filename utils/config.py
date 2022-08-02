@@ -3,10 +3,10 @@ import numpy as np
 
 def obtain_retrain_args():
     parser = argparse.ArgumentParser(description="ReTrain the nas model")
-    parser.add_argument('--dataset', type=str, default='GID-Vege3', choices=['GID-Vege3', 'GID-Vege4', 'GID-Vege5'], help='dataset name (default: pascal)')
+    parser.add_argument('--dataset', type=str, default='GID-Vege3', choices=['GID-Vege3', 'GID-Vege4', 'GID-Vege5', 'Guangdong'], help='dataset name (default: pascal)')
     parser.add_argument('--model_name', type=str, default='PIDNet', choices=['hrnet', 'flexinet', 'fast-nas', 'PIDNet'], help='the model name')
     parser.add_argument('--nas', type=str, default='train', choices=['search', 'train'])
-    parser.add_argument('--workers', type=int, default=0, metavar='N', help='dataloader threads')
+    parser.add_argument('--workers', type=int, default=4, metavar='N', help='dataloader threads')
     parser.add_argument('--resume', type=str, default= None, help='put the path to resuming file if needed')
     parser.add_argument('--checkname', type=str, default='PIDNet', help='set the checkpoint name')
     parser.add_argument('--epochs', type=int, default=200, metavar='N', help='number of epochs to train (default: auto)')
