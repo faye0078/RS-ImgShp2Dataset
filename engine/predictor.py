@@ -1,21 +1,18 @@
 import os
 import numpy as np
-import torch.nn as nn
-from tqdm import tqdm
 import cv2
 import torch
+from tqdm import tqdm
 from utils.loss import SegmentationLosses
 from data import make_predict_split_loader, make_predict_concat_loader
 from data.concat import recons_prob_map
 # from decoder import Decoder
-from utils.lr_scheduler import LR_Scheduler
 from utils.saver import Saver
 from utils.evaluator import Evaluator
-from model.UNet import U_Net
-from utils.copy_state_dict import copy_state_dict
 from model.HRNet import get_HRNet_model
 from model.make_fast_nas import fastNas
 from model.PIDNet import get_PID_model
+from utils.imageProcessor import img_array_to_raster_
 
 import sys
 sys.path.append("./apex")
@@ -128,35 +125,40 @@ class Predictor(object):
         with torch.no_grad():
             for sample in tbar:
                 if self.args.cuda:
-                    image = sample[0].cuda().float()
-                    if len(sample) == 3:
-                        target = sample[1].cuda().float()
+                    image = sample["image"].cuda().float()
+                    if "mask" in sample:
+                        target = sample["mask"].cuda().float()
 
                 shape = image.shape
-                # self.args.origin_size = shape[2:] # TODO
+                self.args.origin_size = sample["size"]
                 pred = torch.zeros(size=(shape[0], 3, *shape[2:]))
 
                 for i in range(0, shape[0], self.args.infer_batch_size):
                     pred[i:i+self.args.infer_batch_size] = self.model(image[i:i+self.args.infer_batch_size])
                 pred = pred.data.cpu().numpy()
 
-                if len(sample) == 3:
+                if "mask" in sample:
                     target = target.cpu().numpy()
                 pred = recons_prob_map(pred, self.args.origin_size, self.args.crop_size, self.args.stride)
                 pred = np.argmax(pred, axis=0)
                 pred = np.squeeze(pred)
+
+                name, transform, projection = sample["image"], sample["name"], \
+                                                   sample["transform"], sample["projection"]
                 lut = get_GID_vege_lut()
-                img = lut[pred]
-                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                img_array_to_raster_(name, pred, 1, transform, projection, lut)
+                
+
+                # img = lut[pred]
+                # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
                 # 黑色填充
                 # squeeze_target = target.squeeze()
                 # img[squeeze_target == 255] = (0, 0, 0)
                 # self.saver.save_img(img, name[0])
 
 def get_GID_vege_lut():
-    lut = np.zeros((512,3), dtype=np.uint8)
+    lut = np.zeros((3,3), dtype=np.uint8)
     lut[0] = [0,255,0]
     lut[1] =  [255, 0, 0]
     lut[2] =  [153,102,51]
-    lut[3] =  [0,0,0]
     return lut

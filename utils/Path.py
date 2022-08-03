@@ -52,6 +52,6 @@ def get_predict_path(dataset, mode):
     elif dataset == 'Guangzhou':
         Path = OrderedDict()
         Path['dir'] = ""
-        Path["predict_list"] = "" # TODO:路径
+        Path["predict_list"] = "/media/dell/DATA/wy/LightRS/data/list/{}/gid15_vege4_train.lst" # TODO:路径
 
     return Path

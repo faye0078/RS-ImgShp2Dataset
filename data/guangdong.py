@@ -4,6 +4,7 @@ from __future__ import print_function, division
 
 import os
 import numpy as np
+import gdal
 from PIL import Image
 from torch.utils.data import Dataset
 
@@ -45,24 +46,35 @@ class Guangdong(Dataset):
         return len(self.datalist)
 
     def __getitem__(self, idx):
-        img_name = os.path.join(self.root_dir, self.datalist[idx][0])
-        msk_name = os.path.join(self.root_dir, self.datalist[idx][1])
+        img_name = os.path.join(self.root_dir, self.datalist[idx])
+        dataset=gdal.Open(img_name)    #打开文件
+        im_width = dataset.RasterXSize  #栅格矩阵的列数
+        im_height = dataset.RasterYSize  #栅格矩阵的行数
 
-        image = np.asarray(Image.open(img_name), dtype=np.float64)
+        transform = dataset.GetGeoTransform() #仿射矩阵
+        projection = dataset.GetProjection() #地图投影信息
+        image = dataset.ReadAsArray(0,0,im_width,im_height) #将数据写成数组，对应栅格矩阵
         image = image / 255.0 # TODO：这里是否需要除什么？
         image = image - self.mean
         image = image / self.std
 
-        sample = {"image": image, "name": self.datalist[idx][1]}
         if self.stage == 'predict':
+            sample = {"image": image,
+                        "transform": transform,
+                        "projection": projection,
+                        "size": (im_width, im_height),
+                        "name": self.datalist[idx][1]}
             if self.transform_test:
                 sample = self.transform_test(sample)
             return sample
-
-        mask = np.array(Image.open(msk_name))
-        # if img_name != msk_name:
-        #     assert len(mask.shape) == 2, "Masks must be encoded without colourmap"
-        sample = {"image": image, "mask": mask, "name": self.datalist[idx][1]}
+        else:
+            mask = np.zeros((im_height, im_width)) # TODO: 读tif的mask
+            sample = {"image": image, 
+                        "mask": mask, 
+                        "transform": transform,
+                        "projection": projection,
+                        "size": (im_width, im_height),
+                        "name": self.datalist[idx][1]}
         if self.stage == "train":
             if self.transform_trn:
                 sample = self.transform_trn(sample)
