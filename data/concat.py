@@ -45,7 +45,7 @@ class WindowGenerator:
         self._i += self.si
         self._j = 0
 
-def crop_patches(dataloader, ori_size, window_size, stride):
+def crop_patches(dataloader, window_size, stride):
     """
     将`dataloader`中的数据裁块。
 
@@ -62,7 +62,7 @@ def crop_patches(dataloader, ori_size, window_size, stride):
 
     for target in dataloader:
         im = target["image"]
-        h, w = ori_size
+        w, h = target["size"]
         win_gen = WindowGenerator(h, w, window_size, window_size, stride, stride)
         all_patches = []
         for rows, cols in win_gen:
@@ -75,7 +75,7 @@ def crop_patches(dataloader, ori_size, window_size, stride):
 def recons_prob_map(patches, ori_size, window_size, stride):
     """从裁块结果重建原始尺寸影像，与`crop_patches`相对应"""
     # NOTE: 目前只能处理batch size为1的情况
-    h, w = ori_size
+    w, h = ori_size
     win_gen = WindowGenerator(h, w, window_size, window_size, stride, stride)
     prob_map = np.zeros((3, h, w), dtype=np.float)
     # XXX: 需要保证win_gen与patches具有相同长度。此处未做检查

@@ -143,9 +143,10 @@ class Predictor(object):
                 pred = np.argmax(pred, axis=0)
                 pred = np.squeeze(pred)
 
-                name, transform, projection = sample["image"], sample["name"], \
-                                                   sample["transform"], sample["projection"]
+                name, transform, projection = sample["name"][0], \
+                                                   np.array(sample["transform"]), sample["projection"][0]
                 lut = get_GID_vege_lut()
+                name = os.path.join(self.saver.experiment_dir, name.split('/')[-1])
                 img_array_to_raster_(name, pred, 1, transform, projection, lut)
                 
 

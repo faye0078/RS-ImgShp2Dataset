@@ -36,7 +36,7 @@ def get_predict_path(dataset, mode):
 
         # Path['nas_train_list'] = "./data/lists/mini_hps_train.lst"
         # Path['nas_val_list'] = "./data/lists/mini_hps_val.lst"
-    elif dataset == 'GID-Vege4' or 'GID-Vege5':
+    elif dataset == 'GID-Vege4' or dataset == 'GID-Vege5':
         Path = OrderedDict()
         if mode == 'split':
             Path['dir'] = "/media/dell/DATA/wy/data/GID-15/512/"
@@ -49,9 +49,9 @@ def get_predict_path(dataset, mode):
         
         # Path['nas_train_list'] = "./data/lists/GID/mini_rs_train.lst"
         # Path['nas_val_list'] = "./data/lists/GID/mini_rs_val.lst"
-    elif dataset == 'Guangzhou':
+    elif dataset == 'Guangdong':
         Path = OrderedDict()
-        Path['dir'] = ""
-        Path["predict_list"] = "/media/dell/DATA/wy/LightRS/data/list/{}/gid15_vege4_train.lst" # TODO:路径
+        Path['dir'] = "/media/dell/DATA/wy/data/"
+        Path["predict_list"] = "/media/dell/DATA/wy/LightRS/data/list/concat/guangdong_predict.lst" # TODO:路径
 
     return Path

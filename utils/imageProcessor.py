@@ -1,8 +1,8 @@
-import gdal
+from osgeo import gdal
 
 def img_array_to_raster_(file_path, array, num_bands, geotransform, projection, colormap):
-    x_pixels = array.shape[0]  # number of pixels in x
-    y_pixels = array.shape[1]  # number of pixels in y
+    x_pixels = array.shape[1]  # number of pixels in x
+    y_pixels = array.shape[0]  # number of pixels in y
 
     driver = gdal.GetDriverByName('GTiff')
 

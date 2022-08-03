@@ -1,4 +1,3 @@
-from sympy import im
 from data.GID_Vege_3bands import GIDVege3
 from data.GID_Vege_4bands import GIDVege4
 from data.GID_Vege_5bands import GIDVege5
@@ -135,7 +134,6 @@ def make_predict_concat_loader(args, **kwargs):
 
     test_dataloader = crop_patches(
         test_loader,
-        args.origin_size,
         args.crop_size,
         args.stride
     )

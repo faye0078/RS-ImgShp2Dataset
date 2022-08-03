@@ -74,7 +74,7 @@ def make_predict_list(data_path, result_path):
     imgs = glob.glob(('{}*.tif'.format(data_path)))
     file = []
     for img in imgs:
-        img = img.replace('/media/dell/DATA/wy/data/gid-15/GID/img_dir/val/', 'image_NirRGB/')
+        img = img.replace('/media/dell/DATA/wy/data/', '')
         file.append(img)
     df = pd.DataFrame(file, columns=['one'])
     df.to_csv(result_path, columns=['one'], index=False, header=False)
@@ -82,4 +82,4 @@ def make_predict_list(data_path, result_path):
 # changeFile()
 # gid2Vege('/media/dell/DATA/wy/data/GID-15/GID/label')
 # make_concat_lst("/media/dell/DATA/wy/data/gid-15/GID/img_dir/val/")
-make_predict_list(data_path="", result_path="")
+make_predict_list(data_path="/media/dell/DATA/wy/data/WHU/", result_path="/media/dell/DATA/wy/LightRS/data/list/concat/whu_predict.lst")

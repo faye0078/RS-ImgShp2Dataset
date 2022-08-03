@@ -4,7 +4,8 @@ from __future__ import print_function, division
 
 import os
 import numpy as np
-import gdal
+import torch
+from osgeo import gdal
 from PIL import Image
 from torch.utils.data import Dataset
 
@@ -35,8 +36,8 @@ class Guangdong(Dataset):
         self.transform_val = transform_val
         self.transform_test = transform_test
         self.stage = stage
-        self.mean = (0.5, 0.5, 0.5)
-        self.std = (0.25, 0.25, 0.25)
+        self.mean = (0.485, 0.456, 0.406)
+        self.std = (0.229, 0.224, 0.225)
 
     def set_config(self, crop_size, resize_side):
         self.transform_trn.transforms[0].resize_side = resize_side
@@ -46,7 +47,7 @@ class Guangdong(Dataset):
         return len(self.datalist)
 
     def __getitem__(self, idx):
-        img_name = os.path.join(self.root_dir, self.datalist[idx])
+        img_name = os.path.join(self.root_dir, self.datalist[idx][0])
         dataset=gdal.Open(img_name)    #打开文件
         im_width = dataset.RasterXSize  #栅格矩阵的列数
         im_height = dataset.RasterYSize  #栅格矩阵的行数
@@ -54,18 +55,19 @@ class Guangdong(Dataset):
         transform = dataset.GetGeoTransform() #仿射矩阵
         projection = dataset.GetProjection() #地图投影信息
         image = dataset.ReadAsArray(0,0,im_width,im_height) #将数据写成数组，对应栅格矩阵
+        image = image.transpose(1,2,0)
         image = image / 255.0 # TODO：这里是否需要除什么？
         image = image - self.mean
         image = image / self.std
 
         if self.stage == 'predict':
+            image = image.transpose((2, 0, 1))
+            image = torch.from_numpy(image)
             sample = {"image": image,
                         "transform": transform,
                         "projection": projection,
                         "size": (im_width, im_height),
-                        "name": self.datalist[idx][1]}
-            if self.transform_test:
-                sample = self.transform_test(sample)
+                        "name": self.datalist[idx][0]}
             return sample
         else:
             mask = np.zeros((im_height, im_width)) # TODO: 读tif的mask
@@ -75,13 +77,5 @@ class Guangdong(Dataset):
                         "projection": projection,
                         "size": (im_width, im_height),
                         "name": self.datalist[idx][1]}
-        if self.stage == "train":
-            if self.transform_trn:
-                sample = self.transform_trn(sample)
-        elif self.stage == "val":
-            if self.transform_val:
-                sample = self.transform_val(sample)
-        elif self.stage == 'test':
-            if self.transform_test:
-                sample = self.transform_test(sample)
+
         return sample
