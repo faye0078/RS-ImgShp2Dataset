@@ -2,6 +2,7 @@ from data.GID_Vege_3bands import GIDVege3
 from data.GID_Vege_4bands import GIDVege4
 from data.GID_Vege_5bands import GIDVege5
 from data.guangdong import Guangdong
+from data.guangdong_train import Guangdong_train
 from torch.utils.data import DataLoader, random_split
 from data.concat import crop_patches
 import sys
@@ -24,6 +25,8 @@ def make_train_loader(args, **kwargs):
         Dataset = GIDVege4
     elif args.dataset == 'GID-Vege5':
         Dataset = GIDVege5
+    elif args.dataset == 'Guangdong_train':
+        Dataset = Guangdong_train
 
     composed_trn = transforms.Compose(
         [
@@ -93,6 +96,8 @@ def make_predict_split_loader(args, **kwargs):
         Dataset = GIDVege4
     elif args.dataset == 'GID-Vege5':
         Dataset = GIDVege5
+    elif args.dataset == 'Guangdong_train':
+        Dataset = Guangdong_train
     composed_test = transforms.Compose(
         [
             CentralCrop(args.crop_size),

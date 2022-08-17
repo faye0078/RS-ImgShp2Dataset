@@ -268,7 +268,7 @@ class HighResolutionNet(nn.Module):
         ALIGN_CORNERS = True
 
         # stem net
-        if args.dataset == 'GID-Vege3':
+        if args.dataset == 'GID-Vege3' or args.dataset == 'Guangdong_train':
             self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1,
                                    bias=False)
         elif args.dataset == 'GID-Vege4':

@@ -15,6 +15,12 @@ def get_train_path(dataset):
         Path['train_list'] = "/media/dell/DATA/wy/LightRS/data/list/split/gid15_vege4_train.lst"
         Path['val_list'] = "/media/dell/DATA/wy/LightRS/data/list/split/gid15_vege4_val.lst"
         Path['test_list'] = "/media/dell/DATA/wy/LightRS/data/list/split/gid15_vege4_val.lst"
+    elif dataset == 'Guangdong_train':
+        Path = OrderedDict()
+        Path['dir'] = ""
+        Path['train_list'] = "/media/dell/DATA/wy/LightRS/data/list/split/guangdong_train.lst"
+        Path['val_list'] = "/media/dell/DATA/wy/LightRS/data/list/split/guangdong_val.lst"
+        Path['test_list'] = "/media/dell/DATA/wy/LightRS/data/list/split/guangdong_test.lst"
         
         # Path['nas_train_list'] = "./data/lists/GID/mini_rs_train.lst"
         # Path['nas_val_list'] = "./data/lists/GID/mini_rs_val.lst"
@@ -52,6 +58,13 @@ def get_predict_path(dataset, mode):
     elif dataset == 'Guangdong':
         Path = OrderedDict()
         Path['dir'] = "/media/dell/DATA/wy/data/"
-        Path["predict_list"] = "/media/dell/DATA/wy/LightRS/data/list/concat/guangdong_predict.lst" # TODO:路径
+        Path["predict_list"] = "/media/dell/DATA/wy/LightRS/data/list/concat/whu_predict.lst" # TODO:路径
+    elif dataset == 'Guangdong_train':
+        Path = OrderedDict()
+        Path['dir'] = ""
+        Path['train_list'] = "/media/dell/DATA/wy/LightRS/data/list/split/guangdong_train.lst"
+        Path['val_list'] = "/media/dell/DATA/wy/LightRS/data/list/split/guangdong_val.lst"
+        Path['test_list'] = "/media/dell/DATA/wy/LightRS/data/list/split/guangdong_test.lst"
+    
 
     return Path

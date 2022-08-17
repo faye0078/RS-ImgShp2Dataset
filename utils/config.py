@@ -3,7 +3,7 @@ import numpy as np
 
 def obtain_retrain_args():
     parser = argparse.ArgumentParser(description="ReTrain the nas model")
-    parser.add_argument('--dataset', type=str, default='GID-Vege3', choices=['GID-Vege3', 'GID-Vege4', 'GID-Vege5', 'Guangdong'], help='dataset name (default: pascal)')
+    parser.add_argument('--dataset', type=str, default='Guangdong_train', choices=['GID-Vege3', 'GID-Vege4', 'GID-Vege5', 'Guangdong_train'], help='dataset name (default: pascal)')
     parser.add_argument('--model_name', type=str, default='PIDNet', choices=['hrnet', 'flexinet', 'fast-nas', 'PIDNet'], help='the model name')
     parser.add_argument('--nas', type=str, default='train', choices=['search', 'train'])
     parser.add_argument('--workers', type=int, default=4, metavar='N', help='dataloader threads')
@@ -51,11 +51,11 @@ def obtain_predict_args():
     parser.add_argument('--stride', type=int, default=256, help='predict')
     parser.add_argument('--infer_batch_size', type=int, default=64, help='predict')
 
-    parser.add_argument('--dataset', type=str, default='Guangdong', choices=['GID-Vege3', 'GID-Vege4', 'GID-Vege5', 'Guangdong'], help='dataset name (default: pascal)')
+    parser.add_argument('--dataset', type=str, default='Guangdong', choices=['GID-Vege3', 'GID-Vege4', 'GID-Vege5', 'Guangdong', 'Guangdong_train'], help='dataset name (default: pascal)')
     parser.add_argument('--model_name', type=str, default='PIDNet', choices=['hrnet', 'flexinet', 'fast-nas', 'PIDNet'], help='the model name')
     parser.add_argument('--nas', type=str, default='train', choices=['search', 'train'])
     parser.add_argument('--workers', type=int, default=0, metavar='N', help='dataloader threads')
-    parser.add_argument('--resume', type=str, default='/media/dell/DATA/wy/LightRS/run/best_model/GID-Vege3/PIDNet/model_best.pth.tar', help='put the path to resuming file if needed')
+    parser.add_argument('--resume', type=str, default='/media/dell/DATA/wy/LightRS/run/best_model/GID-Vege4/PIDNet/model_best.pth.tar', help='put the path to resuming file if needed')
     parser.add_argument('--checkname', type=str, default='PIDNet/predict', help='set the checkpoint name')
     parser.add_argument('--epochs', type=int, default=200, metavar='N', help='number of epochs to train (default: auto)')
     parser.add_argument('--num_worker', type=int, default=4,metavar='N', help='numer workers')

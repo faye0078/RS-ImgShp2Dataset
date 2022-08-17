@@ -36,8 +36,8 @@ class Guangdong(Dataset):
         self.transform_val = transform_val
         self.transform_test = transform_test
         self.stage = stage
-        self.mean = (0.485, 0.456, 0.406)
-        self.std = (0.229, 0.224, 0.225)
+        self.mean = (0.485, 0.456, 0.406, 0.411)
+        self.std = (0.229, 0.224, 0.225, 0.227)
 
     def set_config(self, crop_size, resize_side):
         self.transform_trn.transforms[0].resize_side = resize_side

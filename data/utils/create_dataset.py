@@ -79,7 +79,27 @@ def make_predict_list(data_path, result_path):
     df = pd.DataFrame(file, columns=['one'])
     df.to_csv(result_path, columns=['one'], index=False, header=False)
 
+def make_guangdong_list(dir):
+    file_list = []
+    for dirpath, dirnames, filenames in os.walk(dir):
+        if len(filenames) != 0:
+            for filename in filenames:
+                name = os.path.join(dirpath, filename)
+                # label_name = name.replace('image_', '_label_').replace('_img', '_label').replace('.tif', '.png')
+                label_name = name.replace('image', 'label').replace('img', 'label').replace('sence', 'scene')
+                file_list.append(name + '\t' + label_name)
+    df = pd.DataFrame(file_list, columns=['one'])
+    train_df = df.sample(frac=0.7,random_state=0,axis=0)
+    val_df = df[~df.index.isin(train_df.index)]
+    true_val_df = val_df.sample(frac=0.5,random_state=0,axis=0)
+    test_df = val_df[~val_df.index.isin(true_val_df.index)]
+    train_df.to_csv("/media/dell/DATA/wy/LightRS/data/list/split/guangdong_train.lst", columns=['one'], index=False, header=False)
+    true_val_df.to_csv("/media/dell/DATA/wy/LightRS/data/list/split/guangdong_val.lst", columns=['one'], index=False, header=False)
+    test_df.to_csv("/media/dell/DATA/wy/LightRS/data/list/split/guangdong_test.lst", columns=['one'], index=False, header=False)
+
+
 # changeFile()
 # gid2Vege('/media/dell/DATA/wy/data/GID-15/GID/label')
 # make_concat_lst("/media/dell/DATA/wy/data/gid-15/GID/img_dir/val/")
-make_predict_list(data_path="/media/dell/DATA/wy/data/WHU/", result_path="/media/dell/DATA/wy/LightRS/data/list/concat/whu_predict.lst")
+# make_predict_list(data_path="/media/dell/DATA/wy/data/WHU/", result_path="/media/dell/DATA/wy/LightRS/data/list/concat/whu_predict.lst")
+make_guangdong_list("/media/dell/DATA/wy/data/Guangdong/dataset/512/image/")

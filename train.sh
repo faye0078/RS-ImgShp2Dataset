@@ -1,2 +1,2 @@
-CUDA_VISIBLE_DEVICES=3 python train.py \
---dataset "Guangdong" --model_name "PIDNet"\
+CUDA_VISIBLE_DEVICES=0 python train.py \
+--batch-size 12 --dataset "Guangdong_train" --model_name "hrnet" --checkname "hrnet"

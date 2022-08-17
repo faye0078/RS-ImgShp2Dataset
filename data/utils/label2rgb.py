@@ -27,6 +27,10 @@ GID_15_map = {"工业用地": [200,0,0],
            "池塘": [0,200,250],
            "其他": [0,0,0],
         }
+Vege_map = {"低矮植被": [0,255,0],
+           "高大树木": [255,0,00],
+           "非植被": [153,102,51],
+}
 def translabel(map, label):
     h, w = label.shape
     rgb_image = np.zeros((h, w, 3), dtype=np.uint8)
@@ -39,26 +43,32 @@ def translabel(map, label):
 if __name__ == "__main__":
     # base_dir = "/media/dell/DATA/wy/data/512"
     # list_path = "/media/dell/DATA/wy/Seg_NAS/data/lists/GID/rs_test.lst"
-    base_dir = "/media/dell/DATA/wy/data/GID-15/512"
-    list_path = "/media/dell/DATA/wy/LightRS/data/list/gid15_vege_val.lst"
-    with open(list_path, "rb") as f:
-            datalist = f.readlines()
+    # base_dir = "/media/dell/DATA/wy/data/GID-15/512"
+    # list_path = "/media/dell/DATA/wy/LightRS/data/list/gid15_vege_val.lst"
+    # with open(list_path, "rb") as f:
+    #         datalist = f.readlines()
 
-    label_list = [
-                k[1]
-                for k in map(
-                    lambda x: x.decode("utf-8").strip("\n").strip("\r").split("\t"), datalist
-                )
-            ]
-    sample_list = label_list
-    for label_path in sample_list:
-        label = cv2.imread(os.path.join(base_dir, label_path), cv2.IMREAD_GRAYSCALE)
-        # image = translabel(GID_map, label)
-        image = translabel(GID_Vege_map, label)
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        filename = label_path.split('/')[-1]
-        img_name= label_path.split('/')[-2]
-        if not os.path.exists(os.path.join(base_dir, "rgb_label", img_name)):
-            os.makedirs(os.path.join(base_dir, "rgb_label", img_name))
-        cv2.imwrite(os.path.join(base_dir, "rgb_label", img_name, filename), image)
+    # label_list = [
+    #             k[1]
+    #             for k in map(
+    #                 lambda x: x.decode("utf-8").strip("\n").strip("\r").split("\t"), datalist
+    #             )
+    #         ]
+    # sample_list = label_list
+    # for label_path in sample_list:
+    #     label = cv2.imread(os.path.join(base_dir, label_path), cv2.IMREAD_GRAYSCALE)
+    #     # image = translabel(GID_map, label)
+    #     image = translabel(GID_Vege_map, label)
+    #     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    #     filename = label_path.split('/')[-1]
+    #     img_name= label_path.split('/')[-2]
+    #     if not os.path.exists(os.path.join(base_dir, "rgb_label", img_name)):
+    #         os.makedirs(os.path.join(base_dir, "rgb_label", img_name))
+    #     cv2.imwrite(os.path.join(base_dir, "rgb_label", img_name, filename), image)
+
+    img_name = "/media/dell/DATA/wy/data/Guangdong/dataset/origin_label/label_scene2_trans.png"
+    label = cv2.imread(img_name, cv2.IMREAD_GRAYSCALE)
+    image = translabel(GID_Vege_map, label)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    cv2.imwrite(img_name.replace('.png', 'trueRGB.png'), image)
     

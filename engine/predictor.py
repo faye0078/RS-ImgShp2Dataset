@@ -80,7 +80,10 @@ class Predictor(object):
         if args.resume is not None:
             if not os.path.isfile(args.resume):
                 raise RuntimeError("=> no checkpoint found at '{}'" .format(args.resume))
-            checkpoint = torch.load(args.resume)
+            if args.cuda:
+                checkpoint = torch.load(args.resume)
+            else:
+                checkpoint = torch.load(args.resume, map_location='cpu')
             self.start_epoch = checkpoint['epoch']
             self.model.load_state_dict(checkpoint['state_dict'],  strict=False)
             self.best_pred = checkpoint['best_pred']
