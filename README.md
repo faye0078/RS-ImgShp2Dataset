@@ -1,49 +1,28 @@
-# LightRS
+## 原始数据描述与分析
+### 遥感影像图
+* 491张未纠正
+* 来源为高景1号（309张）和worldview（182张）卫星
+* 大概为30000×30000
+* 3波段影像
+* 分辨率0.5m
+* 像素深度为8位
+* 广东省中南部：佛山市、广州市、中山市、惠州市、东莞市、深圳市、珠海市
+* 112.508266~114.882403  
+21.739339~24.072637
+  
+### 矢量数据
+* 121个矢量数据
+* 覆盖广东全省
+* 三级类
 
+**低植被/low vege** 
 
+0110 水田 0140 茶园 0170 苗圃 0180 花圃 0370 人工幼林 0380 稀疏灌木丛 0390：0391 0392 0393 天然草地：高覆盖度草地 中覆盖度草地 低覆盖度草地 03A0：03A1 03A2 03A3 03A4 03A9 人工草地：牧草地 绿化草地 固沙灌草 护坡灌草 其他人工草地 
 
-## Ralated Paper & Code
+**高植被/high vege**
 
-[PIDNet](https://arxiv.org/pdf/2206.02066v2.pdf):      [code](https://github.com/XuJiacong/PIDNet)
+0130：0131 0132 0133 果园：乔灌果园 藤本果园 草本果园 0310：0311 0312 0313 乔木林：阔叶林 针叶林 针阔混交林 0320：0321 0322 0323 灌木林：阔叶灌木林 针叶灌木林 针阔混交灌木林 0330：乔灌混合林 0340：竹林 0350：疏林 0360：绿化林地 
 
-![PIDNet](./images/PIDNet.png)
+**待定/waiting**
 
-[SFNet-R18](https://arxiv.org/pdf/2002.10120v3.pdf):    [code](https://github.com/lxtGH/SFSegNets)
-
-[PP-LiteSeg](https://arxiv.org/pdf/2204.02681v1.pdf):     [code](https://github.com/xiaomingnio/pp_liteseg_pytorch)
-
-[Mobile-Former](https://arxiv.org/abs/2108.05895):    [code](https://github.com/ACheun9/Pytorch-implementation-of-Mobile-Former)
-
-[Fast-NAS](https://arxiv.org/abs/1810.10804):    [code](https://github.com/DrSleep/nas-segm-pytorch)
-
-## Thinking Direction
-
-* Hardware constraint
-* dataset choice
-* How to deploy the model
-
-## Dataset
-
-### GID-15
-110 7200x6800 pictures, 100 train 10 val
-
-cut into blocks of 512×512 size
-
-#### all label:
- ['industrial_land', 'urban_residential', 'rural_residential',
-'traffic_land', 'paddy_field', 'irrigated_land', 'dry_cropland',
-'garden_plot', 'arbor_woodland', 'shrub_land', 'natural_grassland',
-'artificial_grassland', 'river', 'lake', 'pond', 'unknown']
-
-#### converted label
-0: low vegetable: paddy_field,irrigated_land,natural_grassland,artificial_grassland
-
-1: high vegetable: arbor_woodland
-
-2: others: others
-
-3: unknown: label 0
-
-
-
-城市绿化、城市森林、农田
+0150 桑园 0160 橡胶园 0190：0191 0192 0193 其他经济苗木：其他乔灌经济苗木 其他藤本经济苗木 其他草本经济苗木
