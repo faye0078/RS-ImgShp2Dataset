@@ -1,7 +1,6 @@
 import glob
 from osgeo import gdal
 
-
 def tif2png(tif_name):
     options = gdal.TranslateOptions(format='PNG', bandList=[])
     gdal.Translate(tif_name.replace('.tif', '.png'), tif_name, options=options)

@@ -1,14 +1,10 @@
 from PIL import Image
-from PIL import ImageDraw
 import glob
 import numpy as np
 import os
-import sys
-
 
 def image_clip(img_path, size):
 
-    # 转换为数组进行分割操作，计算能完整分割的行数(row)、列数(col)
     img_name = img_path.split('.')[-2].split('/')[-1]
     img_dir = "../../data/GID-15/512/image/" + img_name
     folder = os.path.exists(img_dir)
@@ -34,7 +30,6 @@ def image_clip(img_path, size):
             clipImg.save(img_filepath)
 
 
-    # 两个for循环分割能完整分割的图像，并保存图像、坐标转换文件
     for row in range(num_row):
         clipArray = imarray[row * size[0]:(row + 1) * size[0], num_col * size[1]:(num_col + 1) * size[1]]
         clipImg = Image.fromarray(clipArray)
@@ -98,7 +93,6 @@ def image_clip(img_path, size):
     clipImg.save(img_filepath)
 def label_clip(img_path, size):
 
-    # 转换为数组进行分割操作，计算能完整分割的行数(row)、列数(col)
     img_name = img_path.split('.')[-2].split('/')[-1].replace('_15label', '')
     img_dir = "../../../data/GID-15/512/label/" + img_name
     folder = os.path.exists(img_dir)
@@ -123,8 +117,6 @@ def label_clip(img_path, size):
                 row + 1) + "_" + str(col + 1) + "_label.png"
             clipImg.save(img_filepath)
 
-
-    # 两个for循环分割能完整分割的图像，并保存图像、坐标转换文件
     for row in range(num_row):
         clipArray = imarray[row * size[0]:(row + 1) * size[0], num_col * size[1]:(num_col + 1) * size[1]]
         clipImg = Image.fromarray(clipArray)
