@@ -9,3 +9,8 @@ def get_colormap():
     colormap[1] =  [255, 0, 0]
     colormap[2] =  [153,102,51]
     return colormap
+
+def get_guiyang_labelmap(): # TODO: 改变规则
+    labelmap = np.zeros((4,1), dtype=np.uint8)
+    labelmap[0] = 0
+    return labelmap
