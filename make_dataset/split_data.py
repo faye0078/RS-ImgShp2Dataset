@@ -2,16 +2,34 @@ from PIL import Image
 import glob
 import numpy as np
 import os
+from osgeo import gdal
+import tifffile as tiff
+
+def is_exist_zero_pixel_4(array):
+    a = np.where(np.all(array == [0, 0, 0, 0], axis=-1))[:2]
+    if len(a[0]) >50:
+        return True
+    else:
+        return False   
+    
+def is_exist_zero_pixel_1(array):
+    num = sum(sum(array == 0))
+    if num > 2049:
+        return True
+    else:
+        return False        
+            
 
 def image_clip(img_path, size):
 
     img_name = img_path.split('.')[-2].split('/')[-1]
-    img_dir = "../../data/GID-15/512/image/" + img_name
+    img_dir = "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/" + img_name
     folder = os.path.exists(img_dir)
     if not folder:
         os.makedirs(img_dir)
 
-    imarray = np.array(Image.open(img_path))
+    imarray = gdal.Open(img_path).ReadAsArray()
+    imarray = np.transpose(imarray, (1, 2, 0))
     imshape = imarray.shape
     H = imshape[0]
     W = imshape[1]
@@ -23,83 +41,93 @@ def image_clip(img_path, size):
     for row in range(num_row):
         for col in range(num_col):
             clipArray = imarray[row * size[0]:(row + 1) * size[0], col * size[1]:(col + 1) * size[1]]
-            clipImg = Image.fromarray(clipArray)
-
+            if is_exist_zero_pixel_4(clipArray):
+                continue
             img_filepath = img_dir + '/' + img_name + "_" + str(
                 row + 1) + "_" + str(col + 1) + "_img.tif"
-            clipImg.save(img_filepath)
 
+            tiff.imwrite(img_filepath, clipArray)
+            print("row: ", row, "col: ", col)
 
     for row in range(num_row):
         clipArray = imarray[row * size[0]:(row + 1) * size[0], num_col * size[1]:(num_col + 1) * size[1]]
-        clipImg = Image.fromarray(clipArray)
+        if is_exist_zero_pixel_4(clipArray):
+                continue
         img_filepath = img_dir + '/' + img_name + "_" + str(
             row + 1) + "_" + str(num_col + 1) + "_img.tif"
-        clipImg.save(img_filepath)
+        tiff.imwrite(img_filepath, clipArray)
 
         clipArray = imarray[row * size[0]:(row + 1) * size[0], num_col * size[1] + step_col:(num_col + 1) * size[1] + step_col]
+        if is_exist_zero_pixel_4(clipArray):
+                continue
         if (num_col + 1) * size[1] + step_col != imshape[1]:
             print('1drong!!')
-        clipImg = Image.fromarray(clipArray)
+
         img_filepath = img_dir + '/' + img_name + "_" + str(
             row + 1) + "_" + str(num_col + 2) + "_img.tif"
-        clipImg.save(img_filepath)
+        tiff.imwrite(img_filepath, clipArray)
 
     for col in range(num_col):
         clipArray = imarray[num_row * size[0]:(num_row + 1) * size[0], col * size[1]:(col + 1) * size[1]]
-        clipImg = Image.fromarray(clipArray)
+        if is_exist_zero_pixel_4(clipArray):
+                continue
         img_filepath = img_dir + '/' + img_name + "_" + str(
             num_row + 1) + "_" + str(col + 1) + "_img.tif"
-        clipImg.save(img_filepath)
+        tiff.imwrite(img_filepath, clipArray)
 
         clipArray = imarray[num_row * size[0] + step_row:(num_row + 1) * size[0] + step_row, col * size[1]:(col + 1) * size[1]]
+        if is_exist_zero_pixel_4(clipArray):
+                continue
         if (num_row + 1) * size[0] + step_row != imshape[0]:
             print('2drong!!')
-        clipImg = Image.fromarray(clipArray)
+
         img_filepath = img_dir + '/' + img_name + "_" + str(
             num_row + 2) + "_" + str(col + 1) + "_img.tif"
-        clipImg.save(img_filepath)
+        tiff.imwrite(img_filepath, clipArray)
 
     clipArray = imarray[num_row * size[0]:(num_row + 1) * size[0], num_col * size[1]:(num_col + 1) * size[1]]
-    clipImg = Image.fromarray(clipArray)
-    img_filepath = img_dir + '/' + img_name + "_" + str(
-        num_row + 1) + "_" + str(num_col + 1) + "_img.tif"
-    clipImg.save(img_filepath)
+    if not is_exist_zero_pixel_4(clipArray):
+        img_filepath = img_dir + '/' + img_name + "_" + str(
+            num_row + 1) + "_" + str(num_col + 1) + "_img.tif"
+        tiff.imwrite(img_filepath, clipArray)
 
     clipArray = imarray[num_row * size[0]:(num_row + 1) * size[0], num_col * size[1] + step_col:(num_col + 1) * size[1] + step_col]
-    if (num_col + 1) * size[1] + step_col != imshape[1]:
-        print('3drong!!')
-    clipImg = Image.fromarray(clipArray)
-    img_filepath = img_dir + '/' + img_name + "_" + str(
-        num_row + 1) + "_" + str(num_col + 2) + "_img.tif"
-    clipImg.save(img_filepath)
+    if not is_exist_zero_pixel_4(clipArray):
+        if (num_col + 1) * size[1] + step_col != imshape[1]:
+            print('3drong!!')
+        img_filepath = img_dir + '/' + img_name + "_" + str(
+            num_row + 1) + "_" + str(num_col + 2) + "_img.tif"
+        tiff.imwrite(img_filepath, clipArray)
 
     clipArray = imarray[num_row * size[0] + step_row:(num_row + 1) * size[0] + step_row, num_col * size[1]:(num_col + 1) * size[1]]
-    if (num_row + 1) * size[0] + step_row != imshape[0]:
-        print('4drong!!')
-    clipImg = Image.fromarray(clipArray)
-    img_filepath = img_dir + '/' + img_name + "_" + str(
-        num_row + 2) + "_" + str(num_col + 1) + "_img.tif"
-    clipImg.save(img_filepath)
+    if not is_exist_zero_pixel_4(clipArray):
+        if (num_row + 1) * size[0] + step_row != imshape[0]:
+            print('4drong!!')
+        img_filepath = img_dir + '/' + img_name + "_" + str(
+            num_row + 2) + "_" + str(num_col + 1) + "_img.tif"
+        tiff.imwrite(img_filepath, clipArray)
 
     clipArray = imarray[num_row * size[0] + step_row:(num_row + 1) * size[0] + step_row, num_col * size[1] + step_col:(num_col + 1) * size[1] + step_col]
-    if (num_row + 1) * size[0] + step_row != imshape[0]:
-        print('5drong!!')
-    if (num_col + 1) * size[1] + step_col != imshape[1]:
-        print('6drong!!')
-    clipImg = Image.fromarray(clipArray)
-    img_filepath = img_dir + '/' + img_name + "_" + str(
-        num_row + 2) + "_" + str(num_col + 2) + "_img.tif"
-    clipImg.save(img_filepath)
-def label_clip(img_path, size):
+    if not is_exist_zero_pixel_4(clipArray):
+        if (num_row + 1) * size[0] + step_row != imshape[0]:
+            print('5drong!!')
+        if (num_col + 1) * size[1] + step_col != imshape[1]:
+            print('6drong!!')
+        
+        img_filepath = img_dir + '/' + img_name + "_" + str(
+            num_row + 2) + "_" + str(num_col + 2) + "_img.tif"
+        tiff.imwrite(img_filepath, clipArray)
+def label_clip(img_path, size, type):
 
-    img_name = img_path.split('.')[-2].split('/')[-1].replace('_15label', '')
-    img_dir = "../../../data/GID-15/512/label/" + img_name
+    img_name = img_path.split('.')[-2].split('/')[-1]
+    img_dir = "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/" + type + "/" + img_name
     folder = os.path.exists(img_dir)
     if not folder:
         os.makedirs(img_dir)
-
-    imarray = np.array(Image.open(img_path)) - 1
+    if "sar" in img_path:
+        imarray = gdal.Open(img_path).ReadAsArray().astype(np.uint16)
+    else:
+        imarray = gdal.Open(img_path).ReadAsArray()
     imshape = imarray.shape
     H = imshape[0]
     W = imshape[1]
@@ -111,82 +139,178 @@ def label_clip(img_path, size):
     for row in range(num_row):
         for col in range(num_col):
             clipArray = imarray[row * size[0]:(row + 1) * size[0], col * size[1]:(col + 1) * size[1]]
+            if is_exist_zero_pixel_1(clipArray) and type!="sar":
+                continue
             clipImg = Image.fromarray(clipArray)
 
             img_filepath = img_dir + '/' + img_name + "_" + str(
-                row + 1) + "_" + str(col + 1) + "_label.png"
+                row + 1) + "_" + str(col + 1) + "_{}.png".format(type)
             clipImg.save(img_filepath)
 
     for row in range(num_row):
         clipArray = imarray[row * size[0]:(row + 1) * size[0], num_col * size[1]:(num_col + 1) * size[1]]
+        if is_exist_zero_pixel_1(clipArray) and type!="sar":
+                continue
         clipImg = Image.fromarray(clipArray)
         img_filepath = img_dir + '/' + img_name + "_" + str(
-            row + 1) + "_" + str(num_col + 1) + "_label.png"
+            row + 1) + "_" + str(num_col + 1) + "_{}.png".format(type)
         clipImg.save(img_filepath)
 
         clipArray = imarray[row * size[0]:(row + 1) * size[0], num_col * size[1] + step_col:(num_col + 1) * size[1] + step_col]
+        if is_exist_zero_pixel_1(clipArray) and type!="sar":
+                continue
         if (num_col + 1) * size[1] + step_col != imshape[1]:
             print('1drong!!')
         clipImg = Image.fromarray(clipArray)
         img_filepath = img_dir + '/' + img_name + "_" + str(
-            row + 1) + "_" + str(num_col + 2) + "_label.png"
+            row + 1) + "_" + str(num_col + 2) + "_{}.png".format(type)
         clipImg.save(img_filepath)
 
     for col in range(num_col):
         clipArray = imarray[num_row * size[0]:(num_row + 1) * size[0], col * size[1]:(col + 1) * size[1]]
+        if is_exist_zero_pixel_1(clipArray) and type!="sar":
+                continue
         clipImg = Image.fromarray(clipArray)
         img_filepath = img_dir + '/' + img_name + "_" + str(
-            num_row + 1) + "_" + str(col + 1) + "_label.png"
+            num_row + 1) + "_" + str(col + 1) + "_{}.png".format(type)
         clipImg.save(img_filepath)
 
         clipArray = imarray[num_row * size[0] + step_row:(num_row + 1) * size[0] + step_row, col * size[1]:(col + 1) * size[1]]
+        if is_exist_zero_pixel_1(clipArray) and type!="sar":
+                continue
         if (num_row + 1) * size[0] + step_row != imshape[0]:
             print('2drong!!')
         clipImg = Image.fromarray(clipArray)
         img_filepath = img_dir + '/' + img_name + "_" + str(
-            num_row + 2) + "_" + str(col + 1) + "_label.png"
+            num_row + 2) + "_" + str(col + 1) + "_{}.png".format(type)
         clipImg.save(img_filepath)
 
     clipArray = imarray[num_row * size[0]:(num_row + 1) * size[0], num_col * size[1]:(num_col + 1) * size[1]]
-    clipImg = Image.fromarray(clipArray)
-    img_filepath = img_dir + '/' + img_name + "_" + str(
-        num_row + 1) + "_" + str(num_col + 1) + "_label.png"
-    clipImg.save(img_filepath)
+    if is_exist_zero_pixel_1(clipArray) and type!="sar":
+        clipImg = Image.fromarray(clipArray)
+        img_filepath = img_dir + '/' + img_name + "_" + str(
+            num_row + 1) + "_" + str(num_col + 1) + "_{}.png".format(type)
+        clipImg.save(img_filepath)
 
     clipArray = imarray[num_row * size[0]:(num_row + 1) * size[0], num_col * size[1] + step_col:(num_col + 1) * size[1] + step_col]
-    if (num_col + 1) * size[1] + step_col != imshape[1]:
-        print('3drong!!')
-    clipImg = Image.fromarray(clipArray)
-    img_filepath = img_dir + '/' + img_name + "_" + str(
-        num_row + 1) + "_" + str(num_col + 2) + "_label.png"
-    clipImg.save(img_filepath)
+    if is_exist_zero_pixel_1(clipArray) and type!="sar":
+        if (num_col + 1) * size[1] + step_col != imshape[1]:
+            print('3drong!!')
+        clipImg = Image.fromarray(clipArray)
+        img_filepath = img_dir + '/' + img_name + "_" + str(
+            num_row + 1) + "_" + str(num_col + 2) + "_{}.png".format(type)
+        clipImg.save(img_filepath)
 
     clipArray = imarray[num_row * size[0] + step_row:(num_row + 1) * size[0] + step_row, num_col * size[1]:(num_col + 1) * size[1]]
-    if (num_row + 1) * size[0] + step_row != imshape[0]:
-        print('4drong!!')
-    clipImg = Image.fromarray(clipArray)
-    img_filepath = img_dir + '/' + img_name + "_" + str(
-        num_row + 2) + "_" + str(num_col + 1) + "_label.png"
-    clipImg.save(img_filepath)
+    if is_exist_zero_pixel_1(clipArray) and type!="sar":
+        if (num_row + 1) * size[0] + step_row != imshape[0]:
+            print('4drong!!')
+        clipImg = Image.fromarray(clipArray)
+        img_filepath = img_dir + '/' + img_name + "_" + str(
+            num_row + 2) + "_" + str(num_col + 1) + "_{}.png".format(type)
+        clipImg.save(img_filepath)
 
     clipArray = imarray[num_row * size[0] + step_row:(num_row + 1) * size[0] + step_row, num_col * size[1] + step_col:(num_col + 1) * size[1] + step_col]
-    if (num_row + 1) * size[0] + step_row != imshape[0]:
-        print('5drong!!')
-    if (num_col + 1) * size[1] + step_col != imshape[1]:
-        print('6drong!!')
-    clipImg = Image.fromarray(clipArray)
-    img_filepath = img_dir + '/' + img_name + "_" + str(
-        num_row + 2) + "_" + str(num_col + 2) + "_label.png"
-    clipImg.save(img_filepath)
-if __name__=='__main__':
-    folder = os.path.exists("../../../data/GID-15/512/label")
-    if not folder:
-        os.makedirs("../../../data/GID-15/512/label")
+    if is_exist_zero_pixel_1(clipArray) and type!="sar":
+        if (num_row + 1) * size[0] + step_row != imshape[0]:
+            print('5drong!!')
+        if (num_col + 1) * size[1] + step_col != imshape[1]:
+            print('6drong!!')
+        clipImg = Image.fromarray(clipArray)
+        img_filepath = img_dir + '/' + img_name + "_" + str(
+            num_row + 2) + "_" + str(num_col + 2) + "_{}.png".format(type)
+        clipImg.save(img_filepath)
+        
+def fliter_data(img_path, label_path, label3_path, sar_apth):
+    for dir, _, file_list in os.walk(img_path):
+        for file in file_list:
+            dir_name = dir.split('/')[-1]
+            image_full_path = os.path.join(dir, file)
+            label_full_path = os.path.join(label_path, dir_name, file).replace('img', 'label').replace('tif', 'png')
+            label3_full_path = os.path.join(label3_path, dir_name, file).replace('img', 'label3').replace('tif', 'png')
+            sar_full_path = []
+            sar_base = os.path.join(sar_apth, dir_name, file).replace('img', 'sar').replace('tif', 'png')
+            for i in range(12):
+                each_sar_path = sar_base.replace(dir_name, str(i + 1) + "_" + dir_name)
+                sar_full_path.append(each_sar_path)
+            
+            flag = True
+            if not os.path.exists(label_full_path) or not os.path.exists(label3_full_path):
+                flag = False
+            
+            # for sar in sar_full_path:
+            #     if not os.path.exists(sar):
+            #         flag = False
+                        
+            # if not flag:
+            #     os.remove(image_full_path)
+            #     os.remove(label_full_path)
+            #     os.remove(label3_full_path)
+                # for sar in sar_full_path:
+                #     os.remove(sar)            
+            
+            
 
-    img_dir = '../../../data/gid-15/GID/ann_dir/train/'
-    imgs = glob.glob('{}*.png'.format(img_dir))
-    for img in imgs:
-        label_clip(img, [512, 512])
+if __name__=='__main__':
+    # split iamge
+    # folder = os.path.exists("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/")
+    # if not folder:
+    #     os.makedirs("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/")
+
+    # img_dir = '/media/dell/DATA/wy/data/guiyang/剑河/光学影像2021/'
+    # imgs = glob.glob('{}*.png'.format(img_dir))
+    # for img in imgs:
+    #     print(img)
+    #     image_clip(img, [1024, 1024])
+        
+    # split label
+    # folder = os.path.exists("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/")
+    # if not folder:
+    #     os.makedirs("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/")
+
+    # img_dir = '/media/dell/DATA/wy/data/guiyang/剑河/数据集/'
+    # folder = "/media/dell/DATA/wy/data/guiyang/剑河/数据集/"
+    # for dir, _, files in os.walk(folder):
+    #     for file in files:
+    #         img = dir.split('/')[-2]
+    #         type = dir.split('/')[-1]
+    #         if type == 'builtup_add':
+    #             print(os.path.join(dir, file))
+    #             label_clip(os.path.join(dir, file), [1024, 1024]m, "label")
+                
+    # split label3
+    # folder = os.path.exists("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/")
+    # if not folder:
+    #     os.makedirs("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/")
+
+    # img_dir = '/media/dell/DATA/wy/data/guiyang/剑河/数据集/'
+    # folder = "/media/dell/DATA/wy/data/guiyang/剑河/数据集/"
+    # for dir, _, files in os.walk(folder):
+    #     for file in files:
+    #         img = dir.split('/')[-2]
+    #         type = dir.split('/')[-1]
+    #         if type == 'label3_clip':
+    #             print(os.path.join(dir, file))
+    #             label_clip(os.path.join(dir, file), [1024, 1024], "label3")
+                
+    # split sar
+    # folder = os.path.exists("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
+    # if not folder:
+    #     os.makedirs("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
+
+    # img_dir = '/media/dell/DATA/wy/data/guiyang/剑河/数据集/'
+    # folder = "/media/dell/DATA/wy/data/guiyang/剑河/数据集/"
+    # for dir, _, files in os.walk(folder):
+    #     for file in files:
+    #         img = dir.split('/')[-2]
+    #         type = dir.split('/')[-1]
+    #         if type == 'sar_clip' and "resample" not in file:
+    #             print(os.path.join(dir, file))
+    #             label_clip(os.path.join(dir, file), [1024, 1024], "sar")
+    
+    # fliter data
+    fliter_data("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
+    # folder = os.path.exists("../../../data/GID-15/512/label")
     # if not folder:
     #     os.makedirs("../../data/GID-15/512/image")
     #
@@ -194,3 +318,4 @@ if __name__=='__main__':
     # imgs = glob.glob('{}*.tif'.format(img_dir))
     # for img in imgs:
     #     image_clip(img, [512, 512])
+
