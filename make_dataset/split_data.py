@@ -221,7 +221,7 @@ def label_clip(img_path, size, type):
             num_row + 2) + "_" + str(num_col + 2) + "_{}.png".format(type)
         clipImg.save(img_filepath)
         
-def fliter_data(img_path, label_path, label3_path, sar_apth):
+def fliter_data(img_path, label_path, label3_path, sar_path):
     for dir, _, file_list in os.walk(img_path):
         for file in file_list:
             dir_name = dir.split('/')[-1]
@@ -229,7 +229,7 @@ def fliter_data(img_path, label_path, label3_path, sar_apth):
             label_full_path = os.path.join(label_path, dir_name, file).replace('img', 'label').replace('tif', 'png')
             label3_full_path = os.path.join(label3_path, dir_name, file).replace('img', 'label3').replace('tif', 'png')
             sar_full_path = []
-            sar_base = os.path.join(sar_apth, dir_name, file).replace('img', 'sar').replace('tif', 'png')
+            sar_base = os.path.join(sar_path, dir_name, file).replace('img', 'sar').replace('tif', 'png')
             for i in range(12):
                 each_sar_path = sar_base.replace(dir_name, str(i + 1) + "_" + dir_name)
                 sar_full_path.append(each_sar_path)
@@ -238,19 +238,53 @@ def fliter_data(img_path, label_path, label3_path, sar_apth):
             if not os.path.exists(label_full_path) or not os.path.exists(label3_full_path):
                 flag = False
             
-            # for sar in sar_full_path:
-            #     if not os.path.exists(sar):
-            #         flag = False
+            for sar in sar_full_path:
+                if not os.path.exists(sar):
+                    flag = False
                         
-            # if not flag:
-            #     os.remove(image_full_path)
-            #     os.remove(label_full_path)
-            #     os.remove(label3_full_path)
-                # for sar in sar_full_path:
-                #     os.remove(sar)            
+            if not flag:
+                if os.path.exists(image_full_path):
+                    os.remove(image_full_path)
+                if os.path.exists(label_full_path):
+                    os.remove(label_full_path)
+                if os.path.exists(label3_full_path):
+                    os.remove(label3_full_path)
+                for sar in sar_full_path:
+                    if os.path.exists(sar):
+                        os.remove(sar)            
             
             
-
+def remove_otherfiles(img_path, label_path, label3_path, sar_path):
+    # get all img
+    all_img_list = []
+    for dir, _, file_list in os.walk(img_path):
+        for file in file_list:
+            all_img_list.append(file)
+    print("all img num: ", len(all_img_list))
+    for dir, _, file_list in os.walk(label_path):
+        for file in file_list:
+            img_file = file.replace("label", "img").replace("png", "tif")
+            if not img_file in all_img_list:
+                os.remove(os.path.join(dir, file))
+                a = 0
+            print("finish{}".format(img_file))
+                
+    for dir, _, file_list in os.walk(label3_path):
+        for file in file_list:
+            img_file = file.replace("label3", "img").replace("png", "tif")
+            if not img_file in all_img_list:
+                os.remove(os.path.join(dir, file))
+                a = 0
+                
+    for dir, _, file_list in os.walk(sar_path):
+        for file in file_list:
+            dir_name = dir.split('/')[-1]
+            replace_str = dir_name.split('_')[1]
+            img_file = file.replace(dir_name, replace_str).replace("sar", "img").replace("png", "tif")
+            if not img_file in all_img_list:
+                os.remove(os.path.join(dir, file))
+                a = 0
+            
 if __name__=='__main__':
     # split iamge
     # folder = os.path.exists("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/")
@@ -309,7 +343,8 @@ if __name__=='__main__':
     #             label_clip(os.path.join(dir, file), [1024, 1024], "sar")
     
     # fliter data
-    fliter_data("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
+    # fliter_data("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
+    remove_otherfiles("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
     # folder = os.path.exists("../../../data/GID-15/512/label")
     # if not folder:
     #     os.makedirs("../../data/GID-15/512/image")

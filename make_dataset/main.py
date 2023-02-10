@@ -229,11 +229,56 @@ def guiyang_change_Li():
         print("finished: {}/{}".format(i, len(time1_label_list)))
     
     return 0
+def cumulative_count_cut(path):
+    image_list = glob.glob(os.path.join(path, "*.tif"))
+    for i, file_path in enumerate(image_list):
+        print("begin {}/{}".format(i, len(image_list)))
+        img_dataset = gdal.Open(file_path)
+        img_array = img_dataset.ReadAsArray()
+        R = img_array[0]
+        G = img_array[1]
+        B = img_array[2]
+        NIR = img_array[3]
+        R_max = np.nanpercentile(R, 98)
+        R_min = np.nanpercentile(R, 2)
+        R[R > R_max] = R_max
+        R[R < R_min] = R_min
+        R = (R - R_min) / (R_max - R_min) * 255
+        
+        G_max = np.nanpercentile(G, 98)
+        G_min = np.nanpercentile(G, 2)
+        G[G > G_max] = G_max
+        G[G < G_min] = G_min
+        G = (G - G_min) / (G_max - G_min) * 255
+        
+        B_max = np.nanpercentile(B, 98)
+        B_min = np.nanpercentile(B, 2)
+        B[B > B_max] = B_max
+        B[B < B_min] = B_min
+        B = (B - B_min) / (B_max - B_min) * 255
+        
+        NIR_max = np.nanpercentile(NIR, 98)
+        NIR_min = np.nanpercentile(NIR, 2)
+        NIR[NIR > NIR_max] = NIR_max
+        NIR[NIR < NIR_min] = NIR_min
+        NIR = (NIR - NIR_min) / (NIR_max - NIR_min) * 255
+        
+        save_path = file_path.replace(".tif", "_cut.tif")
+        driver = gdal.GetDriverByName("GTiff")
+        outdata = driver.Create(save_path, img_dataset.RasterXSize, img_dataset.RasterYSize, 4, gdal.GDT_Byte)
+        outdata.SetGeoTransform(img_dataset.GetGeoTransform())
+        outdata.SetProjection(img_dataset.GetProjection())
+        outdata.GetRasterBand(1).WriteArray(R.astype(np.uint8))
+        outdata.GetRasterBand(2).WriteArray(G.astype(np.uint8))
+        outdata.GetRasterBand(3).WriteArray(B.astype(np.uint8))
+        outdata.GetRasterBand(4).WriteArray(NIR.astype(np.uint8))
+        outdata.FlushCache()
+        outdata = None
 
 if __name__ == '__main__':
     # guangdong()
     # guiyang()
-    guiyang_change_Li()
+    # guiyang_change_Li()
     # guiyang_change()
     # gdal_translate("/media/dell/DATA/wy/data/guiyang/剑河/光学影像2021/")
     # make_sar_image("/media/dell/DATA/wy/data/guiyang/剑河/sar/", "/media/dell/DATA/wy/data/guiyang/剑河/光学影像2021/GF71.png")
@@ -243,3 +288,6 @@ if __name__ == '__main__':
     # img_list = glob.glob(os.path.join(img_path, "*.png"))
     # for img in img_list:
     #     change_img_scale(img)
+    
+    # 色彩拉伸
+    cumulative_count_cut("/media/dell/DATA/wy/data/guiyang/西秀/2020影像/")
