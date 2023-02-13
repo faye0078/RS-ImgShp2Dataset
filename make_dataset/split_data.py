@@ -17,13 +17,13 @@ def is_exist_zero_pixel_1(array):
     if num > 2049:
         return True
     else:
-        return False        
+        return False
             
 
-def image_clip(img_path, size):
+def image_clip(save_path, img_path, size):
 
     img_name = img_path.split('.')[-2].split('/')[-1]
-    img_dir = "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/" + img_name
+    img_dir = os.path.join(save_path, img_name)
     folder = os.path.exists(img_dir)
     if not folder:
         os.makedirs(img_dir)
@@ -287,15 +287,15 @@ def remove_otherfiles(img_path, label_path, label3_path, sar_path):
             
 if __name__=='__main__':
     # split iamge
-    # folder = os.path.exists("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/")
-    # if not folder:
-    #     os.makedirs("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/")
+    folder = os.path.exists("/media/dell/DATA/wy/data/guiyang/裁剪/image/")
+    if not folder:
+        os.makedirs("/media/dell/DATA/wy/data/guiyang/裁剪/image/")
 
-    # img_dir = '/media/dell/DATA/wy/data/guiyang/剑河/光学影像2021/'
-    # imgs = glob.glob('{}*.png'.format(img_dir))
-    # for img in imgs:
-    #     print(img)
-    #     image_clip(img, [1024, 1024])
+    img_dir = '/media/dell/DATA/wy/data/guiyang/RGB影像/剑河/2021_nir/'
+    imgs = glob.glob('{}*.tif'.format(img_dir))
+    for img in imgs:
+        print(img)
+        image_clip('/media/dell/DATA/wy/data/guiyang/裁剪/image/', img, [1024, 1024])
         
     # split label
     # folder = os.path.exists("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/")
@@ -344,7 +344,7 @@ if __name__=='__main__':
     
     # fliter data
     # fliter_data("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
-    remove_otherfiles("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
+    # remove_otherfiles("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
     # folder = os.path.exists("../../../data/GID-15/512/label")
     # if not folder:
     #     os.makedirs("../../data/GID-15/512/image")

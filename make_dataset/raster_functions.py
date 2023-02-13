@@ -331,6 +331,7 @@ def label_tif2png(img_path):
     img_dataset = gdal.Open(img_path)
     img_data = img_dataset.GetRasterBand(1).ReadAsArray()
     img_data = img_data.astype(np.uint8)
+    img_data[img_data == 255] = 0
     img_data[img_data == 1] = 255
     img_data = Image.fromarray(img_data)
     img_name = img_path.replace("conslabel.tif", "label.png")
@@ -349,5 +350,10 @@ def img_save(img_path):
     print("image save finished: ", img_name)
     
     return img_name
+
+def png2tif(img_path):
+    output_path = img_path.replace("png", "tif")
+    trans_command = "gdal_translate -a_srs EPSG:4524 -of GTiff {} {}".format(img_path, output_path)
+    print(os.popen(trans_command).read())
 
         

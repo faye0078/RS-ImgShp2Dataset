@@ -1,4 +1,5 @@
 import glob
+import rasterio
 from shp_functions import merge_shp, shp2raster, trans_shp
 from raster_functions import *
 from configs import get_colormap, get_guiyang_labelmap
@@ -57,9 +58,7 @@ def guiyang():
     ori_img_list = glob.glob(ori_img_path + "*.png")
     flag = 0
     for ori_img in ori_img_list:
-        if ori_img.endswith("JL14.png"):
-            flag = 1
-        if flag == 0:
+        if not ori_img.endswith("JL14.png"):
             continue
             
         print("begin:", ori_img)
@@ -76,10 +75,8 @@ def guiyang():
         label_clip_save_path = os.path.join(new_dir, "label_clip")
         if not os.path.exists(label_clip_save_path):
             os.mkdir(label_clip_save_path)
-        if ori_img.endswith("JL14.png"):
-            ori_label = os.path.join(ori_label_path, "JL14.tif")
-        else:
-            ori_label = os.path.join(ori_label_path, os.path.basename(ori_img))
+
+        ori_label = os.path.join(ori_label_path, os.path.basename(ori_img))
         label_path = clip_label(ori_img, ori_label, label_clip_save_path)
         
         # 附加施工区域标签
@@ -92,10 +89,8 @@ def guiyang():
         label3_clip_save_path = os.path.join(new_dir, "label3_clip")
         if not os.path.exists(label3_clip_save_path):
             os.mkdir(label3_clip_save_path)
-        if ori_img.endswith("JL14.png"):
-            ori_label = os.path.join(ori_label3_path, "JL14.tif")
-        else:
-            ori_label = os.path.join(ori_label3_path, os.path.basename(ori_img))
+
+        ori_label = os.path.join(ori_label3_path, os.path.basename(ori_img))
             
         label3_path = clip_label(ori_img, ori_label, label3_clip_save_path)
         
@@ -221,49 +216,55 @@ def guiyang_change_Li():
             continue
         
         # tif2png
-        time1_label_png_path = label_tif2png(time1_label_path[0])
-        time1_img_png_path = img_save(time1_img_path[0])
+        # time1_label_png_path = label_tif2png(time1_label_path[0])
+        # time1_img_png_path = img_save(time1_img_path[0])
         time2_label_png_path = label_tif2png(time2_label_path[0])
-        time2_img_png_path = img_save(time2_img_path[0])
+        # time2_img_png_path = img_save(time2_img_path[0])
         
         print("finished: {}/{}".format(i, len(time1_label_list)))
     
     return 0
-def cumulative_count_cut(path):
-    image_list = glob.glob(os.path.join(path, "*.tif"))
+def cumulative_count_cut(path, file_type):
+    image_list = glob.glob(os.path.join(path, "*.{}".format(file_type)))
     for i, file_path in enumerate(image_list):
         print("begin {}/{}".format(i, len(image_list)))
         img_dataset = gdal.Open(file_path)
+
         img_array = img_dataset.ReadAsArray()
-        R = img_array[0]
-        G = img_array[1]
-        B = img_array[2]
-        NIR = img_array[3]
-        R_max = np.nanpercentile(R, 98)
-        R_min = np.nanpercentile(R, 2)
+        R = img_array[0].astype(np.float32)
+        G = img_array[1].astype(np.float32)
+        B = img_array[2].astype(np.float32)
+        NIR = img_array[3].astype(np.float32)
+        index = np.where(np.all(img_array.transpose(1, 2, 0) == [0, 0, 0, 0], axis=-1))[:2]
+        R[index] = np.nan
+        G[index] = np.nan
+        B[index] = np.nan
+        NIR[index] = np.nan
+        R_max = np.nanpercentile(R, 75)
+        R_min = np.nanpercentile(R, 25)
         R[R > R_max] = R_max
         R[R < R_min] = R_min
         R = (R - R_min) / (R_max - R_min) * 255
         
-        G_max = np.nanpercentile(G, 98)
-        G_min = np.nanpercentile(G, 2)
+        G_max = np.nanpercentile(G, 75)
+        G_min = np.nanpercentile(G, 25)
         G[G > G_max] = G_max
         G[G < G_min] = G_min
         G = (G - G_min) / (G_max - G_min) * 255
         
-        B_max = np.nanpercentile(B, 98)
-        B_min = np.nanpercentile(B, 2)
+        B_max = np.nanpercentile(B, 75)
+        B_min = np.nanpercentile(B, 25)
         B[B > B_max] = B_max
         B[B < B_min] = B_min
         B = (B - B_min) / (B_max - B_min) * 255
         
-        NIR_max = np.nanpercentile(NIR, 98)
-        NIR_min = np.nanpercentile(NIR, 2)
+        NIR_max = np.nanpercentile(NIR, 75)
+        NIR_min = np.nanpercentile(NIR, 25)
         NIR[NIR > NIR_max] = NIR_max
         NIR[NIR < NIR_min] = NIR_min
         NIR = (NIR - NIR_min) / (NIR_max - NIR_min) * 255
         
-        save_path = file_path.replace(".tif", "_cut.tif")
+        save_path = file_path.replace(".{}".format(file_type), "_cut.tif")
         driver = gdal.GetDriverByName("GTiff")
         outdata = driver.Create(save_path, img_dataset.RasterXSize, img_dataset.RasterYSize, 4, gdal.GDT_Byte)
         outdata.SetGeoTransform(img_dataset.GetGeoTransform())
@@ -275,6 +276,53 @@ def cumulative_count_cut(path):
         outdata.FlushCache()
         outdata = None
 
+def set_nodata_value2nan(path):
+    image_list = glob.glob(os.path.join(path, "*.tif"))
+    for i, file_path in enumerate(image_list):
+        print("begin {}/{}".format(i, len(image_list)))
+        img_dataset = gdal.Open(file_path)
+        # print(img_dataset.GetRasterBand(1).GetNoDataValue())
+        # img_dataset.GetRasterBand(1).SetNoDataValue()
+def guiyang_img_trans(path):
+    image_list = glob.glob(os.path.join(path, "*.png"))
+    for i, file_path in enumerate(image_list):
+        png2tif(file_path)
+        
+def add_nir_channel(rgb_path, nir_path, save_dir):
+    rgb_path = os.path.join(rgb_path, "*.tif")
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    for file in glob.glob(rgb_path):
+        print("begin: {}".format(file))
+        nir_file = os.path.join(nir_path, os.path.basename(file).replace(".tif", ".png"))
+        img_dataset = gdal.Open(file)
+        img_array = img_dataset.ReadAsArray()
+        nir_dataset = gdal.Open(nir_file)
+        nir_array = nir_dataset.ReadAsArray()
+        NIR = nir_array[3].astype(np.float32)
+        index = np.where(np.all(nir_array.transpose(1, 2, 0) == [0, 0, 0, 0], axis=-1))[:2]
+        NIR[index] = np.nan
+        NIR[index] = np.nan
+        NIR_max = np.nanpercentile(NIR, 98)
+        NIR_min = np.nanpercentile(NIR, 2)
+        NIR[NIR > NIR_max] = NIR_max
+        NIR[NIR < NIR_min] = NIR_min
+        NIR = (NIR - NIR_min) / (NIR_max - NIR_min) * 255
+        
+        NIR = NIR.astype(np.uint8)
+        img_array = np.concatenate((img_array, NIR[np.newaxis, :, :]), axis=0)
+        save_path = os.path.join(save_dir, os.path.basename(file))
+        driver = gdal.GetDriverByName("GTiff")
+        outdata = driver.Create(save_path, img_dataset.RasterXSize, img_dataset.RasterYSize, 4, gdal.GDT_Byte)
+        outdata.SetGeoTransform(img_dataset.GetGeoTransform())
+        outdata.SetProjection(img_dataset.GetProjection())
+        outdata.GetRasterBand(1).WriteArray(img_array[0])
+        outdata.GetRasterBand(2).WriteArray(img_array[1])
+        outdata.GetRasterBand(3).WriteArray(img_array[2])
+        outdata.GetRasterBand(4).WriteArray(img_array[3])
+        outdata.FlushCache()
+        outdata = None
+    
 if __name__ == '__main__':
     # guangdong()
     # guiyang()
@@ -289,5 +337,14 @@ if __name__ == '__main__':
     # for img in img_list:
     #     change_img_scale(img)
     
+    # 设置nodata值
+    # set_nodata_value2nan("/media/dell/DATA/wy/data/guiyang/西秀/2022年重采样/")
+    
     # 色彩拉伸
-    cumulative_count_cut("/media/dell/DATA/wy/data/guiyang/西秀/2020影像/")
+    # cumulative_count_cut("/media/dell/DATA/wy/data/guiyang/剑河/2020影像/", file_type='tif')
+    
+    # png2tif
+    # guiyang_img_trans("/media/dell/DATA/wy/data/guiyang/剑河/光学影像2021/")
+    
+    # 通道叠加
+    add_nir_channel("/media/dell/DATA/wy/data/guiyang/RGB影像/剑河/2021/", "/media/dell/DATA/wy/data/guiyang/原始影像/剑河/2021/", save_dir="/media/dell/DATA/wy/data/guiyang/RGB影像/剑河/2021_nir/")
