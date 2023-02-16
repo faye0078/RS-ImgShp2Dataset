@@ -1,6 +1,6 @@
 import glob
 from osgeo import gdal
-from osgeo import ogr
+from osgeo import ogr, osr
 from PIL import Image
 import os 
 import numpy as np
@@ -182,6 +182,7 @@ def split_img_label(img, label, label3, sar_name_list, split_size, overlap_size,
     # split the image
     for i in range(split_num_x):
         for j in range(split_num_y):
+            print("begin {}/{}".format(i * split_num_y + j, split_num_x * split_num_y))
             left_num = i * (split_size - overlap_size)
             bottom_num = j * (split_size - overlap_size)
             windows = [left_num, bottom_num, split_size, split_size]
@@ -228,15 +229,7 @@ def split_img_label(img, label, label3, sar_name_list, split_size, overlap_size,
                 # gdal.Translate(os.path.join(save_path, 'sar_clip', output_sar_name), sar_dataset_list[k], srcWin=windows)
                 
             print("finish {}/{}".format(i * split_num_y + j, split_num_x * split_num_y))
-                
-    # clear the memory
-    img_dataset.FlushCache()
-    img_dataset = None
-    label_dataset.FlushCache()
-    label_dataset = None
-    for sar_dataset in sar_dataset_list:
-        sar_dataset.FlushCache()
-        sar_dataset = None
+
     
     return save_path
     
@@ -254,12 +247,8 @@ def add_builtup_label(label_path, builtup_label_path, save_path):
 
     label_band = label_dataset.GetRasterBand(1)
     label_data = label_band.ReadAsArray()
-    label_geo_trans = label_dataset.GetGeoTransform()
-    label_proj = label_dataset.GetProjection()
     builtup_band = builtup_dataset.GetRasterBand(1)
     builtup_data = builtup_band.ReadAsArray()
-    builtup_geo_trans = builtup_dataset.GetGeoTransform()
-    builtup_proj = builtup_dataset.GetProjection()
     
     if label_data.shape != builtup_data.shape:
         print('the shape of the label and the builtup label is not the same')
@@ -276,14 +265,11 @@ def add_builtup_label(label_path, builtup_label_path, save_path):
     dst_ds.FlushCache()
     dst_ds = None
     
-    label_dataset.FlushCache()
-    label_dataset = None
-    builtup_dataset.FlushCache()
-    builtup_dataset = None
-    
     return result_name
 
 def clip_builtup(img_path, builtup_path, save_path):
+    if not os.path.exists(builtup_path):
+        builtup_path = builtup_path.replace(".tif", ".png")
     img_dataset = gdal.Open(img_path)
     img_geo = img_dataset.GetGeoTransform()
     img_extent = [img_geo[0], img_geo[0] + img_geo[1] * img_dataset.RasterXSize, img_geo[3] + img_geo[5] * img_dataset.RasterYSize, img_geo[3]]
@@ -291,12 +277,15 @@ def clip_builtup(img_path, builtup_path, save_path):
     img_name = os.path.basename(img_path).replace(".png", ".tif")
     clip_path = os.path.join(save_path, img_name)
     clip_command = "gdal_translate -projwin {} {} {} {} -of GTiff {} {}".format(img_extent[0], img_extent[3], img_extent[1], img_extent[2], builtup_path, clip_path)
+    print(clip_command)
     print(os.popen(clip_command).read())
     print("builtup clip finished: ", img_name)
     
     return clip_path
 
 def clip_label(img_path, label_path, save_path):
+    if not os.path.exists(label_path):
+        label_path = label_path.replace(".tif", ".png")
     img_dataset = gdal.Open(img_path)
     img_geo = img_dataset.GetGeoTransform()
     img_extent = [img_geo[0], img_geo[0] + img_geo[1] * img_dataset.RasterXSize, img_geo[3] + img_geo[5] * img_dataset.RasterYSize, img_geo[3]]
@@ -355,5 +344,13 @@ def png2tif(img_path):
     output_path = img_path.replace("png", "tif")
     trans_command = "gdal_translate -a_srs EPSG:4524 -of GTiff {} {}".format(img_path, output_path)
     print(os.popen(trans_command).read())
-
-        
+    
+def gdal_merge_multi(tif_dir):
+    tif_list = glob.glob(os.path.join(tif_dir, "*.tif"))
+    tif_list = " ".join(tif_list)
+    merge_command = "gdal_merge.py -o {} {}".format(os.path.join(tif_dir, "merge.tif"), tif_list)
+    print(os.popen(merge_command).read())
+    
+def gdal_swarp_to_4524(tif_path, result_path):
+    swarp_command = "gdalwarp -t_srs EPSG:4524 -of GTiff {} {}".format(tif_path, result_path)
+    os.system(swarp_command)

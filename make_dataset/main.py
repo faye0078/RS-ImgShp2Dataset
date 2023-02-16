@@ -1,10 +1,12 @@
 import glob
 import rasterio
+import cv2
 from shp_functions import merge_shp, shp2raster, trans_shp
 from raster_functions import *
 from configs import get_colormap, get_guiyang_labelmap
 from clip_change import *
 from utils import *
+from clip_classify import main as clip_classify
 
 # 广州数据条件
 def guangdong():
@@ -48,19 +50,17 @@ def guangdong():
 # 贵阳非农化非粮化数据条件
 def guiyang():
 
-    ori_img_path = "/media/dell/DATA/wy/data/guiyang/剑河/光学影像2021/"
-    ori_sar_path = "/media/dell/DATA/wy/data/guiyang/剑河/sar/" #十二个月份
-    ori_label_path = "/media/dell/DATA/wy/data/guiyang/剑河/mask_crop/"
-    ori_label3_path = "/media/dell/DATA/wy/data/guiyang/剑河/mask_3/"
-    builtup_label_path = "/media/dell/DATA/wy/data/guiyang/剑河/2021标签/label_2021_cons_trans.tif"
-    save_path = "/media/dell/DATA/wy/data/guiyang/剑河/数据集/"
+    ori_img_path = "/media/dell/DATA/wy/data/guiyang/合并影像/西秀/2021_nir/"
+    ori_sar_path = "/media/dell/DATA/wy/data/guiyang//sar/" #十二个月份
+    ori_label_path = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/mask_crop/"
+    ori_label3_path = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/mask_agri/"
+    ori_builtup_label_path = "/media/dell/DATA/wy/data/guiyang/标签/变化检测/剑河/2021标签/label_2021_cons_trans.tif"
+    save_path = "/media/dell/DATA/wy/data/guiyang/数据集/v2/分类/"
     
-    ori_img_list = glob.glob(ori_img_path + "*.png")
+    ori_img_list = glob.glob(ori_img_path + "*.tif")
     flag = 0
     for ori_img in ori_img_list:
-        if not ori_img.endswith("JL14.png"):
-            continue
-            
+        # ori_img = "/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/GF71.tif"
         print("begin:", ori_img)
         new_dir = save_path + ori_img.split("/")[-1].split(".")[0]
         if not os.path.exists(new_dir):
@@ -69,7 +69,7 @@ def guiyang():
         builtup_clip_save_path = os.path.join(new_dir, "builtup_clip")
         if not os.path.exists(builtup_clip_save_path):
             os.mkdir(builtup_clip_save_path)
-        builtup_label_path = clip_builtup(ori_img, builtup_label_path, builtup_clip_save_path)
+        builtup_label_path = clip_builtup(ori_img, ori_builtup_label_path, builtup_clip_save_path)
         
         # 裁剪标签
         label_clip_save_path = os.path.join(new_dir, "label_clip")
@@ -85,7 +85,7 @@ def guiyang():
             os.mkdir(builtup_label_save_path)
         label_path = add_builtup_label(label_path, builtup_label_path, builtup_label_save_path)
         
-        # 裁剪标签3
+        # 裁剪非农化标签
         label3_clip_save_path = os.path.join(new_dir, "label3_clip")
         if not os.path.exists(label3_clip_save_path):
             os.mkdir(label3_clip_save_path)
@@ -94,17 +94,24 @@ def guiyang():
             
         label3_path = clip_label(ori_img, ori_label, label3_clip_save_path)
         
+        
+        # 附加非农化的施工区域标签标签
+        builtup_label_save_path = os.path.join(new_dir, "builtup3_add")
+        if not os.path.exists(builtup_label_save_path):
+            os.mkdir(builtup_label_save_path)
+        label_path = add_builtup_label(label3_path, builtup_label_path, builtup_label_save_path)
+        
         # 裁剪sar
-        sar_clip_save_path = os.path.join(new_dir, "sar_clip")
-        if not os.path.exists(sar_clip_save_path):
-            os.mkdir(sar_clip_save_path)
-        sar_path_list = []
-        for dir, _, files in os.walk(ori_sar_path):
-            for file in files:
-                if file.split(".")[0] == os.path.basename(ori_img).split(".")[0]:
-                    ori_sar = os.path.join(dir, file)
-                    sar_path = clip_sar(ori_img, ori_sar, sar_clip_save_path)
-                    sar_path_list.append(sar_path)
+        # sar_clip_save_path = os.path.join(new_dir, "sar_clip")
+        # if not os.path.exists(sar_clip_save_path):
+        #     os.mkdir(sar_clip_save_path)
+        # sar_path_list = []
+        # for dir, _, files in os.walk(ori_sar_path):
+        #     for file in files:
+        #         if file.split(".")[0] == os.path.basename(ori_img).split(".")[0]:
+        #             ori_sar = os.path.join(dir, file)
+        #             sar_path = clip_sar(ori_img, ori_sar, sar_clip_save_path)
+        #             sar_path_list.append(sar_path)
                     
         # 分块
         # split_img_label(ori_img, label_path, label3_path, sar_name_list=sar_path_list, split_size=1024, overlap_size=0, save_path=new_dir)
@@ -294,7 +301,7 @@ def add_nir_channel(rgb_path, nir_path, save_dir):
         os.makedirs(save_dir)
     for file in glob.glob(rgb_path):
         print("begin: {}".format(file))
-        nir_file = os.path.join(nir_path, os.path.basename(file).replace(".tif", ".png"))
+        nir_file = os.path.join(nir_path, os.path.basename(file))
         img_dataset = gdal.Open(file)
         img_array = img_dataset.ReadAsArray()
         nir_dataset = gdal.Open(nir_file)
@@ -310,6 +317,8 @@ def add_nir_channel(rgb_path, nir_path, save_dir):
         NIR = (NIR - NIR_min) / (NIR_max - NIR_min) * 255
         
         NIR = NIR.astype(np.uint8)
+        if img_array.shape[-2:] != NIR.shape:
+            NIR = cv2.resize(NIR, (img_array.shape[-1], img_array.shape[-2]))
         img_array = np.concatenate((img_array, NIR[np.newaxis, :, :]), axis=0)
         save_path = os.path.join(save_dir, os.path.basename(file))
         driver = gdal.GetDriverByName("GTiff")
@@ -322,8 +331,55 @@ def add_nir_channel(rgb_path, nir_path, save_dir):
         outdata.GetRasterBand(4).WriteArray(img_array[3])
         outdata.FlushCache()
         outdata = None
-    
+        
+def clip_xixiu(img_dir, rgb_dir, save_dir):
+    if not os.path.exists(save_dir):
+        os.mkdir(save_dir)
+    img_list = glob.glob(os.path.join(img_dir, "*.tif"))
+    for i, img_path in enumerate(img_list):
+        print("begin {}/{}".format(i, len(img_list)))
+        img_name = os.path.basename(img_path)
+        rgb_path = os.path.join(rgb_dir, img_name)
+        if not os.path.exists(rgb_path):
+            print("error: {}".format(rgb_path))
+            continue
+        img_dataset = gdal.Open(img_path)
+        img_geo = img_dataset.GetGeoTransform()
+        img_extent = [img_geo[0], img_geo[0] + img_geo[1] * img_dataset.RasterXSize, img_geo[3] + img_geo[5] * img_dataset.RasterYSize, img_geo[3]]
+        clip_command = "gdal_translate -projwin {} {} {} {} -of GTiff {} {}".format(img_extent[0], img_extent[3], img_extent[1], img_extent[2], rgb_path, os.path.join(save_dir, img_name))
+        os.system(clip_command)
+        
+def trans_crs(img_dir, save_dir):
+    if not os.path.exists(save_dir):
+        os.mkdir(save_dir)
+    img_list = glob.glob(os.path.join(img_dir, "*.tif"))
+    for i, img_path in enumerate(img_list):
+        print("begin {}/{}".format(i, len(img_list)))
+        result_path = os.path.join(save_dir, os.path.basename(img_path))
+        trans_command = 'gdal_translate -a_srs EPSG:4524 -of GTiff {} {}'.format(img_path, result_path)
+        os.system(trans_command)
+        
+def change_sar_srs(sar_dir):
+    for dir, _, files in os.walk(sar_dir):
+        for file in files:
+            if file.endswith(".tiff"):
+                save_dir = os.path.join(dir, "warp")
+                if not os.path.exists(save_dir):
+                    os.makedirs(save_dir)
+                gdal_swarp_to_4524(os.path.join(dir, file), os.path.join(save_dir, file))
+                
+def change_xixiu_srs(data_dir):
+    for dir, _, files in os.walk(data_dir):
+        for file in files:
+            if file.endswith(".tif"):
+                save_dir = os.path.join(dir, "warp")
+                if not os.path.exists(save_dir):
+                    os.makedirs(save_dir)
+                gdal_swarp_to_4524(os.path.join(dir, file), os.path.join(save_dir, file))
 if __name__ == '__main__':
+    # 改变影像投影坐标
+    # change_sar_srs("/media/dell/DATA/wy/data/guiyang/sar/sar/")
+    # change_xixiu_srs("/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2020/")
     # guangdong()
     # guiyang()
     # guiyang_change_Li()
@@ -346,5 +402,11 @@ if __name__ == '__main__':
     # png2tif
     # guiyang_img_trans("/media/dell/DATA/wy/data/guiyang/剑河/光学影像2021/")
     
+    # 裁剪西秀影像
+    # clip_xixiu("/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2021/warp/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2021/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2020_clip/")
+    
     # 通道叠加
-    add_nir_channel("/media/dell/DATA/wy/data/guiyang/RGB影像/剑河/2021/", "/media/dell/DATA/wy/data/guiyang/原始影像/剑河/2021/", save_dir="/media/dell/DATA/wy/data/guiyang/RGB影像/剑河/2021_nir/")
+    add_nir_channel("/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2021_clip/", "/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2021/warp/", save_dir="/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2021_nir/")
+    
+    # 裁剪分类数据
+    # clip_classify

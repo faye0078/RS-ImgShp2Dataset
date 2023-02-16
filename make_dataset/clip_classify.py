@@ -142,23 +142,27 @@ def main():
     x_list = area[0] + pixel_size[0] * size[0] * (np.arange(0, num_x, 1))
     y_list = area[2] + pixel_size[1] * size[1] * (np.arange(0, num_y, 1))
     
-    # 获取2020影像list
-    img1_dataset_list = None
-    img1_dir = "/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2020_nir/"
-    img1_list = get_all_type_file(img1_dir, '.tif')
-    img1_dataset_list = [gdal.Open(img_path) for img_path in img1_list]
+    # 获取影像list
+    img_dataset_list = None
+    img_dir = "/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/"
+    img_list = get_all_type_file(img_dir, '.tif')
+    img_dataset_list = [gdal.Open(img_path) for img_path in img_list]
     
-    # 获取2021影像list
-    img2_dataset_list = None
-    img2_dir = "/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/"
-    img2_list = get_all_type_file(img2_dir, '.tif')
-    img2_dataset_list = [gdal.Open(img_path) for img_path in img2_list]
-    # 获取 2020 label
-    label1_path = "/media/dell/DATA/wy/data/guiyang/标签/变化检测/剑河/2020标签/label_2020_trans.tif"
-    label1_dataset = gdal.Open(label1_path)
-    # 获取 2021 label
-    label2_path = "/media/dell/DATA/wy/data/guiyang/标签/变化检测/剑河/2021标签/label_2021_cons_trans.tif"
-    label2_dataset = gdal.Open(label2_path)
+    # 获取label1 list (非农化)
+    label1_dataset_list = None
+    label1_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/label1/"
+    label1_list = get_all_type_file(label1_dir, '.tif')
+    label1_dataset_list = [gdal.Open(label_path) for label_path in label1_list]
+    # 获取label2 list (非农化+施工)
+    label2_dataset_list = None
+    label2_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/label2/"
+    label2_list = get_all_type_file(label2_dir, '.tif')
+    label2_dataset_list = [gdal.Open(label_path) for label_path in label2_list]
+    # 获取label3 list (非粮化+施工)
+    label3_dataset_list = None
+    label3_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/label3/"
+    label3_list = get_all_type_file(label3_dir, '.tif')
+    label3_dataset_list = [gdal.Open(label_path) for label_path in label3_list]
     
     all_clipped_num = 0
     for i, x in enumerate(x_list):
@@ -166,11 +170,11 @@ def main():
             print("x: %d/%d, y: %d/%d" % (i, len(x_list), j, len(y_list)))
             extent = [x, x + pixel_size[0] * size[0], y, y + pixel_size[1] * size[1]]
             # 判断是否存在目标区域的影像
-            img1_files = find_target_image(img1_dataset_list, extent)
-            if len(img1_files) == 0:
+            img_files = find_target_image(img_dataset_list, extent)
+            if len(img_files) == 0:
                 continue
-            img2_files = find_target_image(img2_dataset_list, extent)
-            if len(img2_files) == 0:
+            label1_files = find_target_image(label1_dataset_list, extent)
+            if len(label1_files) == 0:
                 continue
             label2_files = find_target_image(label2_dataset_list, extent)
             if len(label2_files) == 0:
