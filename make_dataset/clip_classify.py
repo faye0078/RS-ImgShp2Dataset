@@ -129,10 +129,21 @@ def clip_sar_image(sar_dir, img_dir, size, save_dir):
             
             print("finished {}/{}".format(j + 1 + i * len(img_list), len(img_list) * len(all_sar_dataset_list)))
     print(error_list)
+    data_path = "/media/dell/DATA/wy/data/guiyang/数据集/v2/"
+
+    for path in error_list:
+        index = path.split('/')[-1].split('_')[0]
+        for dir, _, files in os.walk(data_path):
+            for file in files:
+                if file.split('_')[0] == index:
+                    os.remove(os.path.join(dir, file))
     
 def main():
     # 需裁减的地理范围，像元大小与裁剪大小
-    area = [36527387.25, 36610929.605, 2995506.204, 2906606.027]
+     
+     
+    # area = [36527387.25, 36610929.605, 2995506.204, 2906606.027]
+    area = [36262215.323, 36356989.263, 2949915.705, 2855935.517]
     pixel_size = [0.65, -0.65]
     size = [1024, 1024]
     
@@ -144,23 +155,23 @@ def main():
     
     # 获取影像list
     img_dataset_list = None
-    img_dir = "/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/"
+    img_dir = "/media/dell/DATA/wy/data/guiyang/合并影像/西秀/2021_nir/"
     img_list = get_all_type_file(img_dir, '.tif')
     img_dataset_list = [gdal.Open(img_path) for img_path in img_list]
     
     # 获取label1 list (非农化)
     label1_dataset_list = None
-    label1_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/label1/"
+    label1_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/label1/"
     label1_list = get_all_type_file(label1_dir, '.tif')
     label1_dataset_list = [gdal.Open(label_path) for label_path in label1_list]
     # 获取label2 list (非农化+施工)
     label2_dataset_list = None
-    label2_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/label2/"
+    label2_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/label2/"
     label2_list = get_all_type_file(label2_dir, '.tif')
     label2_dataset_list = [gdal.Open(label_path) for label_path in label2_list]
     # 获取label3 list (非粮化+施工)
     label3_dataset_list = None
-    label3_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/label3/"
+    label3_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/label3/"
     label3_list = get_all_type_file(label3_dir, '.tif')
     label3_dataset_list = [gdal.Open(label_path) for label_path in label3_list]
     
@@ -271,4 +282,4 @@ def main():
     
 if __name__ == "__main__":
     # main()
-    clip_sar_image("/media/dell/DATA/wy/data/guiyang/sar/剑河/2021/","/media/dell/DATA/wy/data/guiyang/数据集/v2/image/", [1024, 1024], "/media/dell/DATA/wy/data/guiyang/数据集/v2/sar/")
+    clip_sar_image("/media/dell/DATA/wy/data/guiyang/sar/西秀/2021/","/media/dell/DATA/wy/data/guiyang/数据集/v2/image/", [1024, 1024], "/media/dell/DATA/wy/data/guiyang/数据集/v2/sar/")

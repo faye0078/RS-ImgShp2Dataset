@@ -51,10 +51,10 @@ def guangdong():
 def guiyang():
 
     ori_img_path = "/media/dell/DATA/wy/data/guiyang/合并影像/西秀/2021_nir/"
-    ori_sar_path = "/media/dell/DATA/wy/data/guiyang//sar/" #十二个月份
-    ori_label_path = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/mask_crop/"
-    ori_label3_path = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/mask_agri/"
-    ori_builtup_label_path = "/media/dell/DATA/wy/data/guiyang/标签/变化检测/剑河/2021标签/label_2021_cons_trans.tif"
+    ori_sar_path = "/media/dell/DATA/wy/data/guiyang/sar/" #十二个月份
+    ori_label_path = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/西秀-非粮化标签10类/warp/"
+    ori_label3_path = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/西秀-非农化标签7类/warp/"
+    ori_builtup_label_path = "/media/dell/DATA/wy/data/guiyang/标签/变化检测/西秀/2021标签/label_2021_trans.tif"
     save_path = "/media/dell/DATA/wy/data/guiyang/数据集/v2/分类/"
     
     ori_img_list = glob.glob(ori_img_path + "*.tif")
@@ -308,6 +308,7 @@ def add_nir_channel(rgb_path, nir_path, save_dir):
         nir_array = nir_dataset.ReadAsArray()
         NIR = nir_array[3].astype(np.float32)
         index = np.where(np.all(nir_array.transpose(1, 2, 0) == [0, 0, 0, 0], axis=-1))[:2]
+        nir_array = None
         NIR[index] = np.nan
         NIR[index] = np.nan
         NIR_max = np.nanpercentile(NIR, 98)
@@ -319,7 +320,6 @@ def add_nir_channel(rgb_path, nir_path, save_dir):
         NIR = NIR.astype(np.uint8)
         if img_array.shape[-2:] != NIR.shape:
             NIR = cv2.resize(NIR, (img_array.shape[-1], img_array.shape[-2]))
-        img_array = np.concatenate((img_array, NIR[np.newaxis, :, :]), axis=0)
         save_path = os.path.join(save_dir, os.path.basename(file))
         driver = gdal.GetDriverByName("GTiff")
         outdata = driver.Create(save_path, img_dataset.RasterXSize, img_dataset.RasterYSize, 4, gdal.GDT_Byte)
@@ -328,7 +328,7 @@ def add_nir_channel(rgb_path, nir_path, save_dir):
         outdata.GetRasterBand(1).WriteArray(img_array[0])
         outdata.GetRasterBand(2).WriteArray(img_array[1])
         outdata.GetRasterBand(3).WriteArray(img_array[2])
-        outdata.GetRasterBand(4).WriteArray(img_array[3])
+        outdata.GetRasterBand(4).WriteArray(NIR)
         outdata.FlushCache()
         outdata = None
         
@@ -379,7 +379,7 @@ def change_xixiu_srs(data_dir):
 if __name__ == '__main__':
     # 改变影像投影坐标
     # change_sar_srs("/media/dell/DATA/wy/data/guiyang/sar/sar/")
-    # change_xixiu_srs("/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2020/")
+    # change_xixiu_srs("/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/西秀-非粮化标签10类/")
     # guangdong()
     # guiyang()
     # guiyang_change_Li()
@@ -403,10 +403,11 @@ if __name__ == '__main__':
     # guiyang_img_trans("/media/dell/DATA/wy/data/guiyang/剑河/光学影像2021/")
     
     # 裁剪西秀影像
-    # clip_xixiu("/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2021/warp/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2021/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2020_clip/")
+    # clip_xixiu("/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2022/warp/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022_clip/")
     
     # 通道叠加
-    add_nir_channel("/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2021_clip/", "/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2021/warp/", save_dir="/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2021_nir/")
+    # add_nir_channel("/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022_clip/", "/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2022/warp/", save_dir="/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022_nir/")
     
     # 裁剪分类数据
     # clip_classify
+    gdal_merge_multi("/media/dell/DATA/wy/data/guiyang/合并影像/西秀/2021_nir/")

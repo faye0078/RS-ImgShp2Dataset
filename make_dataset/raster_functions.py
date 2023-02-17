@@ -253,7 +253,7 @@ def add_builtup_label(label_path, builtup_label_path, save_path):
     if label_data.shape != builtup_data.shape:
         print('the shape of the label and the builtup label is not the same')
         return
-
+    label_data[label_data==127] = 0
     label_data[builtup_data == 1] = 11
     driver = gdal.GetDriverByName("GTiff")
     img_name = os.path.basename(label_path).replace(".png", ".tif")
@@ -349,8 +349,8 @@ def gdal_merge_multi(tif_dir):
     tif_list = glob.glob(os.path.join(tif_dir, "*.tif"))
     tif_list = " ".join(tif_list)
     merge_command = "gdal_merge.py -o {} {}".format(os.path.join(tif_dir, "merge.tif"), tif_list)
-    print(os.popen(merge_command).read())
+    os.system(merge_command)
     
 def gdal_swarp_to_4524(tif_path, result_path):
-    swarp_command = "gdalwarp -t_srs EPSG:4524 -of GTiff {} {}".format(tif_path, result_path)
+    swarp_command = "gdalwarp -t_srs EPSG:4524 -tr 0.65 0.65 -of GTiff {} {}".format(tif_path, result_path)
     os.system(swarp_command)
