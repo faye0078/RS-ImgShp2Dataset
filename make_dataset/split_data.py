@@ -343,7 +343,7 @@ if __name__=='__main__':
     #             label_clip(os.path.join(dir, file), [1024, 1024], "sar")
     
     # fliter data
-    # fliter_data("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
+    fliter_data("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
     # remove_otherfiles("/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/image/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/label3/", "/media/dell/DATA/wy/data/guiyang/剑河/数据集/裁剪/sar/")
     # folder = os.path.exists("../../../data/GID-15/512/label")
     # if not folder:

@@ -301,7 +301,7 @@ def add_nir_channel(rgb_path, nir_path, save_dir):
         os.makedirs(save_dir)
     for file in glob.glob(rgb_path):
         print("begin: {}".format(file))
-        nir_file = os.path.join(nir_path, os.path.basename(file))
+        nir_file = os.path.join(nir_path, os.path.basename(file).replace(".tif", ".png"))
         img_dataset = gdal.Open(file)
         img_array = img_dataset.ReadAsArray()
         nir_dataset = gdal.Open(nir_file)
@@ -337,6 +337,7 @@ def clip_xixiu(img_dir, rgb_dir, save_dir):
         os.mkdir(save_dir)
     img_list = glob.glob(os.path.join(img_dir, "*.tif"))
     for i, img_path in enumerate(img_list):
+
         print("begin {}/{}".format(i, len(img_list)))
         img_name = os.path.basename(img_path)
         rgb_path = os.path.join(rgb_dir, img_name)
@@ -403,11 +404,12 @@ if __name__ == '__main__':
     # guiyang_img_trans("/media/dell/DATA/wy/data/guiyang/剑河/光学影像2021/")
     
     # 裁剪西秀影像
-    # clip_xixiu("/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2022/warp/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022_clip/")
+    clip_xixiu("/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2022/warp/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022_clip/")
     
     # 通道叠加
-    # add_nir_channel("/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022_clip/", "/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2022/warp/", save_dir="/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022_nir/")
+    # add_nir_channel("/media/dell/DATA/wy/data/guiyang/RGB影像/剑河/2022/", "/media/dell/DATA/wy/data/guiyang/原始影像/剑河/2022/", save_dir="/media/dell/DATA/wy/data/guiyang/RGB影像/剑河/2022_nir/")
     
     # 裁剪分类数据
     # clip_classify
-    gdal_merge_multi("/media/dell/DATA/wy/data/guiyang/合并影像/西秀/2021_nir/")
+    # gdal_merge_multi("/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2022_nir/")
+    
