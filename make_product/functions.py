@@ -3,6 +3,14 @@ from osgeo import gdal
 import os
 import numpy as np
 import glob
+import math
+def get_all_type_file(dir, file_type):
+    all_file_list = []
+    for dir, _, file_list in os.walk(dir):
+        for file in file_list:
+            if file.endswith(file_type):
+                all_file_list.append(os.path.join(dir, file))
+    return all_file_list
 def extract_feature(input_shp, output_shp, field_name, field_value):
     # 打开原始shp文件
     driver = ogr.GetDriverByName('ESRI Shapefile')
@@ -156,3 +164,95 @@ def fill_nodata_erea(ori_tif_path, img_dir, shp_path, save_tif_path):
             img_dataset = gdal.Open(img_name)
             img_array = img_dataset.ReadAsArray()
             ori_array[:, i, j] = img_array[:, 0, 0]
+            
+def split_big_tif(tif_path, save_dir, split_size):
+    tif_dataset = gdal.Open(tif_path)
+    tif_array = tif_dataset.ReadAsArray()
+    tif_geo = tif_dataset.GetGeoTransform()
+    tif_proj = tif_dataset.GetProjection()
+    tif_x_size = tif_dataset.RasterXSize
+    tif_y_size = tif_dataset.RasterYSize
+    tif_x_num = math.ceil(tif_x_size / split_size)
+    tif_y_num = math.ceil(tif_y_size / split_size)
+    for i in range(tif_y_num):
+        for j in range(tif_x_num):
+            
+            x_start = j * split_size
+            x_end = (j + 1) * split_size
+            y_start = i * split_size
+            y_end = (i + 1) * split_size
+            if x_end > tif_x_size:
+                x_end = tif_x_size
+            if y_end > tif_y_size:
+                y_end = tif_y_size
+            
+            split_array = tif_array[:, y_start:y_end, x_start:x_end]
+            if np.all(split_array == 0):
+                continue
+            save_path = os.path.join(save_dir, f"{i}_{j}.tif")
+            save_dataset = gdal.GetDriverByName('GTiff').Create(save_path, x_end - x_start, y_end - y_start, 4, gdal.GDT_Byte)
+            save_dataset.SetGeoTransform((tif_geo[0] + x_start * tif_geo[1], tif_geo[1], tif_geo[2], tif_geo[3] + y_start * tif_geo[5], tif_geo[4], tif_geo[5]))
+            save_dataset.SetProjection(tif_proj)
+            save_dataset.GetRasterBand(1).WriteArray(tif_array[0, y_start:y_end, x_start:x_end])
+            save_dataset.GetRasterBand(2).WriteArray(tif_array[1, y_start:y_end, x_start:x_end])
+            save_dataset.GetRasterBand(3).WriteArray(tif_array[2, y_start:y_end, x_start:x_end])
+            save_dataset.GetRasterBand(4).WriteArray(tif_array[3, y_start:y_end, x_start:x_end])
+            save_dataset.FlushCache()
+            save_dataset = None
+            print("finish {}/{}, {}/{}".format(i, tif_y_num, j, tif_x_num))
+            
+def copy_files_from_another(time1_dir, time2_dir):
+    time1_list = glob.glob(os.path.join(time1_dir, '*.tif'))
+    time2_list = glob.glob(os.path.join(time2_dir, '*.tif'))
+    for time1_file in time1_list:
+        time1_file_name = os.path.basename(time1_file)
+        time2_file = os.path.join(time2_dir, time1_file_name)
+        if not os.path.exists(time2_file):
+            os.system(f'cp {time1_file} {time2_file}')
+    
+    for time2_file in time2_list:
+        time2_file_name = os.path.basename(time2_file)
+        time1_file = os.path.join(time1_dir, time2_file_name)
+        if not os.path.exists(time1_file):
+            os.system(f'cp {time2_file} {time1_file}')
+            
+def clip_sar(sar_dir, img_path, save_dir):
+    all_sar_dataset_list = None
+    all_sar_list = get_all_type_file(sar_dir, '.tif')
+    all_sar_list = sorted(all_sar_list)
+    all_sar_dataset_list = [gdal.Open(sar_path) for sar_path in all_sar_list if "cut" in sar_path]
+    error_list = []
+    img_list = glob.glob(os.path.join(img_path, '*.tif'))
+    for i, sar_dataset in enumerate(all_sar_dataset_list):
+        each_save_dir = os.path.join(save_dir, str(i + 1))
+        if not os.path.exists(each_save_dir):
+            os.makedirs(each_save_dir)
+        for j, img_path in enumerate(img_list):
+            a = j + 1 + i * len(img_list)
+            img_dataset = gdal.Open(img_path)
+            img_geo = img_dataset.GetGeoTransform()
+            sar_geo = sar_dataset.GetGeoTransform()
+            img_extent = [img_geo[0], img_geo[0] + img_geo[1] * img_dataset.RasterXSize, img_geo[3], img_geo[3] + img_geo[5] * img_dataset.RasterYSize]
+            # 计算裁剪范围
+            x_min = int((img_extent[0] - sar_geo[0]) / sar_geo[1])
+            y_min = int((img_extent[2] - sar_geo[3]) / sar_geo[5])
+            x_max = int((img_extent[1] - sar_geo[0]) / sar_geo[1])
+            y_max = int((img_extent[3] - sar_geo[3]) / sar_geo[5])
+            # 裁剪影像
+            clip_image = sar_dataset.ReadAsArray(x_min, y_min, x_max - x_min, y_max - y_min)
+            if clip_image is None:
+                if img_path not in error_list:
+                    error_list.append(img_path)
+                continue
+            # 保存裁剪影像
+            clip_image_path = os.path.join(each_save_dir, os.path.basename(img_list[j]).replace("image", "sar"))
+            clip_image_driver = gdal.GetDriverByName('GTiff')
+            clip_image_dataset = clip_image_driver.Create(clip_image_path, x_max - x_min, y_max - y_min, 2, gdal.GDT_Float32)
+            clip_image_dataset.SetGeoTransform((img_geo[0], sar_geo[1], 0, img_geo[3], 0, sar_geo[5]))
+            clip_image_dataset.SetProjection(sar_dataset.GetProjection())
+            clip_image_dataset.GetRasterBand(1).WriteArray(clip_image[0])
+            clip_image_dataset.GetRasterBand(2).WriteArray(clip_image[1])
+            clip_image_dataset.FlushCache()
+            clip_image_dataset = None
+            
+            print("finished {}/{}".format(j + 1 + i * len(img_list), len(img_list) * len(all_sar_dataset_list)))
