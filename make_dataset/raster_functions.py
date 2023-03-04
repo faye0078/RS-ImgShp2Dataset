@@ -59,23 +59,12 @@ def clip_mask_by_img(img_name, mask_name):
         img_name (str): the path of the image
         mask_name (str): the path of the mask
     """    
-    dataset = gdal.Open(img_name)
-    im_width = dataset.RasterXSize
-    im_height = dataset.RasterYSize
-    transform = dataset.GetGeoTransform()
-
-    ms_dataset = gdal.Open(mask_name)
-    ms_transform = ms_dataset.GetGeoTransform()
-    if ms_transform[3] < transform[3]:
-        transform_y = transform[3] + dataset.RasterYSize * transform[5]
-    else:
-        transform_y = transform[3]
-    left_num = int((transform[0] - ms_transform[0]) / transform[1])
-    bottom_num = int((transform_y - ms_transform[3]) / -transform[5])
-
     clip_mask_name = mask_name.replace(".tif", "_clip.tif")
-    windows = [left_num, bottom_num, im_width, im_height]
-    gdal.Translate(clip_mask_name, ms_dataset, srcWin=windows)
+    img_dataset = gdal.Open(img_name)
+    img_geo = img_dataset.GetGeoTransform()
+    img_extent = [img_geo[0], img_geo[0] + img_geo[1] * img_dataset.RasterXSize, img_geo[3] + img_geo[5] * img_dataset.RasterYSize, img_geo[3]]
+    clip_command = "gdal_translate -projwin {} {} {} {} -of GTiff {} {}".format(img_extent[0], img_extent[3], img_extent[1], img_extent[2], mask_name, clip_mask_name)
+    os.system(clip_command)
     
 def check_geo_params(img_path, label_path):
     """check the geo params of the image and the label

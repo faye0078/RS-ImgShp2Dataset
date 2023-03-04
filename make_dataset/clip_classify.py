@@ -73,7 +73,7 @@ def choose_best_label_array(label1_files, label2_files, label3_files, extent):
         y_max = int((extent[3] - image_extent[3]) / image_extent[5])
         # 裁剪影像
         clip_image_array = dataset.ReadAsArray(x_min, y_min, x_max - x_min, y_max - y_min)
-        if is_exist_zero_pixel_1(clip_image_array, 100):
+        if is_exist_zero_pixel_1(clip_image_array, 0):
             continue
         else:
             label1_array = clip_image_array
@@ -89,7 +89,7 @@ def clip_sar_image(sar_dir, img_dir, size, save_dir):
     all_sar_dataset_list = None
     all_sar_list = get_all_type_file(sar_dir, '.tif')
     all_sar_list = sorted(all_sar_list)
-    all_sar_dataset_list = [gdal.Open(sar_path) for sar_path in all_sar_list]
+    all_sar_dataset_list = [gdal.Open(sar_path) for sar_path in all_sar_list if 'cut' not in sar_path]
     
     img_list = get_all_type_file(img_dir, '.tif')
     error_list = []
@@ -115,11 +115,12 @@ def clip_sar_image(sar_dir, img_dir, size, save_dir):
                 if img_path not in error_list:
                     error_list.append(img_path)
                 continue
-            clip_image = cv2.resize(clip_image.transpose(1, 2, 0), (size[0], size[1]), interpolation=cv2.INTER_CUBIC).transpose(2, 0, 1)
+            # clip_image = cv2.resize(clip_image.transpose(1, 2, 0), (size[0], size[1]), interpolation=cv2.INTER_CUBIC).transpose(2, 0, 1)
             # 保存裁剪影像
             clip_image_path = os.path.join(each_save_dir, os.path.basename(img_list[j]).replace("image", "sar"))
             clip_image_driver = gdal.GetDriverByName('GTiff')
-            clip_image_dataset = clip_image_driver.Create(clip_image_path, size[0], size[1], 2, gdal.GDT_Float32)
+            # clip_image_dataset = clip_image_driver.Create(clip_image_path, size[0], size[1], 2, gdal.GDT_Float32)
+            clip_image_dataset = clip_image_driver.Create(clip_image_path, clip_image.shape[2], clip_image.shape[1], 2, gdal.GDT_Float32)
             clip_image_dataset.SetGeoTransform((img_geo[0], img_geo[1], 0, img_geo[3], 0, img_geo[5]))
             clip_image_dataset.SetProjection(sar_dataset.GetProjection())
             clip_image_dataset.GetRasterBand(1).WriteArray(clip_image[0])
@@ -205,7 +206,7 @@ def main():
             
             # 保存裁剪后的影像
             
-            save_dir = "/media/dell/DATA/wy/data/guiyang/数据集/v2/"
+            save_dir = "/media/dell/DATA/wy/data/guiyang/数据集/v3/xixiu"
             save_img_path = os.path.join(save_dir, "image", "{}_{}_image.tif".format(i, j))
             if not os.path.exists(os.path.join(save_dir, "image")):
                 os.makedirs(os.path.join(save_dir, "image"))
@@ -282,4 +283,4 @@ def main():
     
 if __name__ == "__main__":
     # main()
-    clip_sar_image("/media/dell/DATA/wy/data/guiyang/sar/西秀/2021/","/media/dell/DATA/wy/data/guiyang/数据集/v2/image/", [1024, 1024], "/media/dell/DATA/wy/data/guiyang/数据集/v2/sar/")
+    clip_sar_image("/media/dell/DATA/wy/data/guiyang/sar/剑河/2021/","/media/dell/DATA/wy/data/guiyang/数据集/v3/分类/剑河/image/", [1024, 1024], "/media/dell/DATA/wy/data/guiyang/数据集/v3/分类/剑河/sar/")

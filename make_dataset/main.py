@@ -1,7 +1,7 @@
 import glob
 import rasterio
 import cv2
-from shp_functions import merge_shp, shp2raster, trans_shp
+from shp_functions import *
 from raster_functions import *
 from configs import get_colormap, get_guiyang_labelmap
 from clip_change import *
@@ -10,42 +10,47 @@ from clip_classify import main as clip_classify
 
 # 广州数据条件
 def guangdong():
-    print("begin:")
-    shp_dir = "shapefile/" # the path of all shp files
-    file = 'I:/WHU_WY/image_finish/20DEC01030057-M2AS-013317249080_04_P002_FUS_DOM.tif' # the path of the image, which is used to create the dataset
     
-    # 查询覆盖的shp
-    print("1.begin to search")
-    shp_list, pixel_size = search_shp_by_raster(file, shp_dir)
-    if len(shp_list) == 0:
-        print("mistake appear: no shp file is found")
-        exit(0)
-    print("finish search")
-    
-    # 合并覆盖shp
-    print("2.begin merge shp")
-    file_name = file.split("\\")[-1].split(".")[0]
-    shp_file = merge_shp(shp_list, file_name)
-    print("finish merge shp")
-    
-    # 类别转换
-    print("3.begin translate shp")
-    trans_shp(shp_file)
-    print("finish translate shp")
-    
-    # shp转栅格
-    print("4.begin shp2raster")
-    output_raster = shp_file.split(".")[0] + '.tif'
-    colormap = get_colormap()
-    shp2raster(shp_file, output_raster, pixel_size, colormap)
-    print("finish shp2raster")
-    
-    # 裁剪
-    print("5.begin clip")
-    clip_mask_by_img(file, output_raster)
-    print("finish clip")
-    
-    print("all finished")
+    shp_dir = "/media/dell/DATA/wy/data/guiyang/GIM/2021/LCPA/" # the path of all shp files
+    tif_dir = '/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/' # the path of the image, which is used to create the dataset
+    file_list = glob.glob(tif_dir + '*.tif')
+    for i, file in enumerate(file_list):
+        dir = file.split('/')[-1].split('.')[0]
+        if os.path.exists(os.path.join(shp_dir, dir, "merged_clip.tif")):
+            continue
+        print("begin:{} {}/{}".format(file, str(i), str(len(file_list))))
+        # 查询覆盖的shp
+        print("1.begin to search")
+        shp_list, pixel_size = search_shp_by_raster(file, shp_dir)
+        if len(shp_list) == 0:
+            print("mistake appear: no shp file is found")
+            exit(0)
+        print("finish search")
+        
+        # 合并覆盖shp
+        print("2.begin merge shp")
+        file_name = file.split("/")[-1].split(".")[0]
+        shp_file = merge_shp(shp_list, file_name)
+        print("finish merge shp")
+        
+        # 类别转换
+        print("3.begin translate shp")
+        trans_shp(shp_file)
+        print("finish translate shp")
+        
+        # shp转栅格
+        print("4.begin shp2raster")
+        output_raster = shp_file.split(".")[0] + '.tif'
+        colormap = get_colormap()
+        shp2raster(shp_file, output_raster, pixel_size, colormap)
+        print("finish shp2raster")
+        
+        # 裁剪
+        print("5.begin clip")
+        clip_mask_by_img(file, output_raster)
+        print("finish clip")
+        
+        print("all finished")
     
 # 贵阳非农化非粮化数据条件
 def guiyang():
@@ -300,6 +305,8 @@ def add_nir_channel(rgb_path, nir_path, save_dir):
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     for file in glob.glob(rgb_path):
+        if not file.endswith("JL14.tif"):
+            continue
         print("begin: {}".format(file))
         nir_file = os.path.join(nir_path, os.path.basename(file).replace(".tif", ".png"))
         img_dataset = gdal.Open(file)
@@ -337,7 +344,6 @@ def clip_xixiu(img_dir, rgb_dir, save_dir):
         os.mkdir(save_dir)
     img_list = glob.glob(os.path.join(img_dir, "*.tif"))
     for i, img_path in enumerate(img_list):
-
         print("begin {}/{}".format(i, len(img_list)))
         img_name = os.path.basename(img_path)
         rgb_path = os.path.join(rgb_dir, img_name)
@@ -377,11 +383,40 @@ def change_xixiu_srs(data_dir):
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
                 gdal_swarp_to_4524(os.path.join(dir, file), os.path.join(save_dir, file))
+                
+def guiyang_label_trans(shp_path):
+    # 类别转换
+    print("3.begin translate shp")
+    trans_shp(shp_path)
+    print("finish translate shp")
+    
+    # shp转栅格
+    # print("4.begin shp2raster")
+    # output_raster = shp_path.split(".")[0] + '.tif'
+    # colormap = get_colormap()
+    # shp2raster(shp_path, output_raster, 0.6, colormap)
+    # print("finish shp2raster")
+
+def set_tif_color_map(tif_path):
+    img_dataset = gdal.Open(tif_path)
+    
+    img_array = img_dataset.ReadAsArray()
+    
+    driver = gdal.GetDriverByName("GTiff")
+    dst_ds = driver.Create(tif_path.replace(".tif", "_color.tif"), img_dataset.RasterXSize, img_dataset.RasterYSize, 1, gdal.GDT_Byte)
+    dst_ds.SetGeoTransform(img_dataset.GetGeoTransform())
+    dst_ds.SetProjection(img_dataset.GetProjection())
+    dst_ds.GetRasterBand(1).WriteArray(img_array)
+    ct = get_colormap()
+    dst_ds.GetRasterBand(1).SetRasterColorTable(ct)
+    
+    dst_ds.FlushCache()
+    
 if __name__ == '__main__':
     # 改变影像投影坐标
     # change_sar_srs("/media/dell/DATA/wy/data/guiyang/sar/sar/")
     # change_xixiu_srs("/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/西秀-非粮化标签10类/")
-    # guangdong()
+    guangdong()
     # guiyang()
     # guiyang_change_Li()
     # guiyang_change()
@@ -404,12 +439,33 @@ if __name__ == '__main__':
     # guiyang_img_trans("/media/dell/DATA/wy/data/guiyang/剑河/光学影像2021/")
     
     # 裁剪西秀影像
-    clip_xixiu("/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2022/warp/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022_clip/")
+    # clip_xixiu("/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2022/warp/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022_clip/")
     
     # 通道叠加
-    # add_nir_channel("/media/dell/DATA/wy/data/guiyang/RGB影像/剑河/2022/", "/media/dell/DATA/wy/data/guiyang/原始影像/剑河/2022/", save_dir="/media/dell/DATA/wy/data/guiyang/RGB影像/剑河/2022_nir/")
+    # add_nir_channel("/media/dell/DATA/wy/data/guiyang/RGB影像/剑河/2021/", "/media/dell/DATA/wy/data/guiyang/原始影像/剑河/2021/", save_dir="/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/")
     
     # 裁剪分类数据
     # clip_classify
-    # gdal_merge_multi("/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2022_nir/")
+    # gdal_merge_multi("/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/")
+    
+    # guiyang_label_trans("/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/shape_label/jianhe2021.shp")
+    # set_tif_color_map('/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/shape_label/jianhe2021_byte.tif')
+    
+    # 统计数据
+    # feature_count = area_features_by_field("/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/shape_label/jianhe.shp")
+    # feature_count_1 = area_features_by_field("/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/shape_label/xixiu2021.shp")
+    # import collections
+    # feature_count = collections.Counter(feature_count)
+    # feature_count_1 = collections.Counter(feature_count_1)
+    # counter = feature_count + feature_count_1
+    # count = dict(counter)
+    # chinese_count = {}
+    # for index in count:
+    #     chinese_index = CORRESPOND[index]
+    #     if chinese_index not in chinese_count:
+    #         chinese_count[chinese_index] = count[index] * 1000000
+    #     else:
+    #         chinese_count[chinese_index] += count[index] * 1000000
+    # print(chinese_count)
+
     
