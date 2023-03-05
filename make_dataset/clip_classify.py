@@ -13,9 +13,8 @@ def is_exist_zero_pixel_4(array, max_num):
         return False   
     
 def is_exist_zero_pixel_1(array, max_num):
-    num = sum(sum(array == 0))
-    num_15 = sum(sum(array == 15))
-    if num > max_num or num_15 > max_num:
+    num = sum(sum(array == 255))
+    if num > max_num:
         return True
     else:
         return False
@@ -60,11 +59,9 @@ def choose_best_image_array(img_files, extent):
             break
     return result_array
 
-def choose_best_label_array(label1_files, label2_files, label3_files, extent):
-    label1_array = None
-    label2_array = None
-    label3_array = None
-    for i, dataset in enumerate(label1_files):
+def choose_best_label_array(label_files, extent):
+    label_array = None
+    for i, dataset in enumerate(label_files):
         image_extent = dataset.GetGeoTransform()
         # 计算裁剪范围
         x_min = int((extent[0] - image_extent[0]) / image_extent[1])
@@ -76,11 +73,9 @@ def choose_best_label_array(label1_files, label2_files, label3_files, extent):
         if is_exist_zero_pixel_1(clip_image_array, 0):
             continue
         else:
-            label1_array = clip_image_array
-            label2_array = label2_files[i].ReadAsArray(x_min, y_min, x_max - x_min, y_max - y_min)
-            label3_array = label3_files[i].ReadAsArray(x_min, y_min, x_max - x_min, y_max - y_min)
+            label_array = clip_image_array
             break
-    return label1_array, label2_array, label3_array
+    return label_array
 
 def clip_sar_image(sar_dir, img_dir, size, save_dir):
     if not os.path.exists(save_dir):
@@ -143,8 +138,8 @@ def main():
     # 需裁减的地理范围，像元大小与裁剪大小
      
      
-    # area = [36527387.25, 36610929.605, 2995506.204, 2906606.027]
-    area = [36262215.323, 36356989.263, 2949915.705, 2855935.517]
+    area = [36527387.25, 36610929.605, 2995506.204, 2906606.027]
+    # area = [36262215.323, 36356989.263, 2949915.705, 2855935.517]
     pixel_size = [0.65, -0.65]
     size = [1024, 1024]
     
@@ -156,25 +151,15 @@ def main():
     
     # 获取影像list
     img_dataset_list = None
-    img_dir = "/media/dell/DATA/wy/data/guiyang/合并影像/西秀/2021_nir/"
+    img_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/合并影像/剑河/2021_nir/"
     img_list = get_all_type_file(img_dir, '.tif')
     img_dataset_list = [gdal.Open(img_path) for img_path in img_list]
     
-    # 获取label1 list (非农化)
-    label1_dataset_list = None
-    label1_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/label1/"
-    label1_list = get_all_type_file(label1_dir, '.tif')
-    label1_dataset_list = [gdal.Open(label_path) for label_path in label1_list]
-    # 获取label2 list (非农化+施工)
-    label2_dataset_list = None
-    label2_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/label2/"
-    label2_list = get_all_type_file(label2_dir, '.tif')
-    label2_dataset_list = [gdal.Open(label_path) for label_path in label2_list]
-    # 获取label3 list (非粮化+施工)
-    label3_dataset_list = None
-    label3_dir = "/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/label3/"
-    label3_list = get_all_type_file(label3_dir, '.tif')
-    label3_dataset_list = [gdal.Open(label_path) for label_path in label3_list]
+    # 获取label list
+    label_dataset_list = None
+    label_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/label/剑河/"
+    label_list = get_all_type_file(label_dir, '.tif')
+    label_dataset_list = [gdal.Open(label_path) for label_path in label_list]
     
     all_clipped_num = 0
     for i, x in enumerate(x_list):
@@ -185,14 +170,8 @@ def main():
             img_files = find_target_image(img_dataset_list, extent)
             if len(img_files) == 0:
                 continue
-            label1_files = find_target_image(label1_dataset_list, extent)
-            if len(label1_files) == 0:
-                continue
-            label2_files = find_target_image(label2_dataset_list, extent)
-            if len(label2_files) == 0:
-                continue
-            label3_files = find_target_image(label3_dataset_list, extent)
-            if len(label3_files) == 0:
+            label_files = find_target_image(label_dataset_list, extent)
+            if len(label_files) == 0:
                 continue
             
             # 判断目标区域的影像有无nodata/选择最优的影像作为裁剪影像,并得到array
@@ -200,26 +179,19 @@ def main():
             if img_array is None or img_array.shape[1] != size[0] or img_array.shape[2] != size[1]:
                 continue
 
-            label1, label2, label3 = choose_best_label_array(label1_files, label2_files, label3_files,extent)
-            if label1 is None or label2 is None or label3 is None or label1.shape[0] != size[0] or label1.shape[1] != size[1] or label2.shape[0] != size[0] or label2.shape[1] != size[1] or label3.shape[0] != size[0] or label3.shape[1] != size[1]:
+            label = choose_best_label_array(label_files, extent)
+            if label is None or label.shape[0] != size[0] or label.shape[1] != size[1]:
                 continue
             
             # 保存裁剪后的影像
-            
-            save_dir = "/media/dell/DATA/wy/data/guiyang/数据集/v3/xixiu"
+            save_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/"
             save_img_path = os.path.join(save_dir, "image", "{}_{}_image.tif".format(i, j))
             if not os.path.exists(os.path.join(save_dir, "image")):
                 os.makedirs(os.path.join(save_dir, "image"))
-            if not os.path.exists(os.path.join(save_dir, "label1")):
-                os.makedirs(os.path.join(save_dir, "label1"))
-            if not os.path.exists(os.path.join(save_dir, "label2")):
-                os.makedirs(os.path.join(save_dir, "label2"))
-            if not os.path.exists(os.path.join(save_dir, "label3")):
-                os.makedirs(os.path.join(save_dir, "label3"))
+            if not os.path.exists(os.path.join(save_dir, "label")):
+                os.makedirs(os.path.join(save_dir, "label"))
             
-            save_label1_path = os.path.join(save_dir, "label1", "{}_{}_label1.tif".format(i, j))
-            save_label2_path = os.path.join(save_dir, "label2", "{}_{}_label2.tif".format(i, j))
-            save_label3_path = os.path.join(save_dir, "label3", "{}_{}_label3.tif".format(i, j))
+            save_label_path = os.path.join(save_dir, "label", "{}_{}_label.tif".format(i, j))
             
             
             driver = gdal.GetDriverByName("GTiff")
@@ -231,56 +203,19 @@ def main():
             dst_ds.FlushCache()
             dst_ds = None
             
-            dst_ds = driver.Create(save_label1_path, size[0], size[1], 1, gdal.GDT_Byte)
-            label1[label1==5] = 4
-            label1[label1==6] = 5
-            label1[label1==7] = 6
-            dst_ds.GetRasterBand(1).WriteArray(label1)
+            dst_ds = driver.Create(save_label_path, size[0], size[1], 1, gdal.GDT_Byte)
+            dst_ds.GetRasterBand(1).WriteArray(label)
             color_table = get_label1_color_table()
             dst_ds.SetGeoTransform([x, pixel_size[0], 0, y, 0, pixel_size[1]])
             dst_ds.SetProjection(img_dataset_list[0].GetProjection())
             dst_ds.GetRasterBand(1).SetRasterColorTable(color_table)
             dst_ds.FlushCache()
             dst_ds = None
-            
-            dst_ds = driver.Create(save_label2_path, size[0], size[1], 1, gdal.GDT_Byte)
-            label2[label2==5] = 4
-            label2[label2==6] = 5
-            label2[label2==7] = 6
-            label2[label2==11] = 7
-            dst_ds.GetRasterBand(1).WriteArray(label2)
-            color_table = get_label2_color_table()
-            dst_ds.SetGeoTransform([x, pixel_size[0], 0, y, 0, pixel_size[1]])
-            dst_ds.SetProjection(img_dataset_list[0].GetProjection())
-            dst_ds.GetRasterBand(1).SetRasterColorTable(color_table)
-            dst_ds.FlushCache()
-            dst_ds = None
-            
-            dst_ds = driver.Create(save_label3_path, size[0], size[1], 1, gdal.GDT_Byte)
-            label_zeros = np.zeros((size[0], size[1]), dtype=np.uint8)
-            label_zeros[label3==8] = 1
-            label_zeros[label3==9] = 2
-            label_zeros[label3==10] = 3
-            label_zeros[label3==1] = 4
-            label_zeros[label3==2] = 5
-            label_zeros[label3==3] = 6
-            label_zeros[label3==4] = 7
-            label_zeros[label3==5] = 7
-            label_zeros[label3==6] = 8
-            label_zeros[label3==7] = 9
-            label_zeros[label3==11] = 10
-            dst_ds.GetRasterBand(1).WriteArray(label_zeros)
-            color_table = get_label3_color_table()
-            dst_ds.SetGeoTransform([x, pixel_size[0], 0, y, 0, pixel_size[1]])
-            dst_ds.SetProjection(img_dataset_list[0].GetProjection())
-            dst_ds.GetRasterBand(1).SetRasterColorTable(color_table)
-            dst_ds.FlushCache()
-            dst_ds = None
-            
+        
             all_clipped_num += 1
             print("finished: ", i * num_y + j + 1, "/", num_x * num_y)
     print("all_clipped_num: ", all_clipped_num)
     
 if __name__ == "__main__":
-    # main()
-    clip_sar_image("/media/dell/DATA/wy/data/guiyang/sar/剑河/2021/","/media/dell/DATA/wy/data/guiyang/数据集/v3/分类/剑河/image/", [1024, 1024], "/media/dell/DATA/wy/data/guiyang/数据集/v3/分类/剑河/sar/")
+    main()
+    # clip_sar_image("/media/dell/DATA/wy/data/guiyang/sar/剑河/2021/","/media/dell/DATA/wy/data/guiyang/数据集/v3/分类/剑河/image/", [1024, 1024], "/media/dell/DATA/wy/data/guiyang/数据集/v3/分类/剑河/sar/")

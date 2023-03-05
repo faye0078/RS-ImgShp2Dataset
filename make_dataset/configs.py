@@ -13,7 +13,8 @@ HIGHVEGE = ["0131", "0132", "0133", "0311", "0312", "0313", "0321", "0322", "032
 苗圃 = ['0307', '0307K']
 草地 = ['0401','0403','0404','0403K']
 工矿用地 = ['0601', '0602']
-公共用地 = ['05H1','0508','08H1','08H2','0809','0810','08H2A','0810A']
+公共建筑 = ['05H1','0508','08H1','08H2','0809', '08H2A',]
+公园绿地 = ['0810', '0810A']
 城镇住宅 = ['0701']
 农村住宅 = ['0702']
 公路用地 = ['1003']
@@ -96,24 +97,27 @@ CORRESPOND = {
 
 def get_colormap():
     tb = gdal.ColorTable()
-    tb.SetColorEntry(0, (255, 60, 117, 255))
-    tb.SetColorEntry(1, (37, 60, 117, 255))
-    tb.SetColorEntry(2, (42, 130, 127, 255))
-    tb.SetColorEntry(3, (109, 119, 39, 255))
+    tb.SetColorEntry(0, (42, 130, 127))
+    tb.SetColorEntry(1, (109, 119, 39, 255))
+    tb.SetColorEntry(2, (160, 12, 153, 255))
+    tb.SetColorEntry(3, (217, 217, 217, 255))
     tb.SetColorEntry(4, (12, 113, 6, 255))
     tb.SetColorEntry(5, (127, 228, 121, 255))
-    tb.SetColorEntry(6, (0,255,0, 255))
-    tb.SetColorEntry(7, (255, 0, 0, 255))
-    tb.SetColorEntry(8, (255, 210, 10, 255))
-    tb.SetColorEntry(9, (242, 161, 0, 255))
-    tb.SetColorEntry(10, (218, 242, 0, 255))
-    tb.SetColorEntry(11, (156, 65, 0, 255))
-    tb.SetColorEntry(12, (63, 186, 252, 255))
-    tb.SetColorEntry(13, (0, 0, 255, 255))
-    tb.SetColorEntry(14, (255, 255, 0, 255))
-    tb.SetColorEntry(15, (255, 19, 0, 255))
-    tb.SetColorEntry(16, (255, 0, 19, 255))
-    tb.SetColorEntry(17, (0, 0, 0, 255))
+    tb.SetColorEntry(6, (226, 240, 217, 255))
+    
+    tb.SetColorEntry(7, (0, 255, 0, 255))
+    tb.SetColorEntry(8, (218, 242, 0, 255))
+    tb.SetColorEntry(9, (255, 0, 0, 255))
+    tb.SetColorEntry(10, (244, 177, 131, 255))
+    tb.SetColorEntry(11, (255, 210, 10, 255))
+    tb.SetColorEntry(12, (242, 121, 0, 255))
+    
+    tb.SetColorEntry(13, (156, 65, 0, 255))
+    tb.SetColorEntry(14, (92, 64, 64, 255))
+    tb.SetColorEntry(15, (63, 186, 252, 255))
+    tb.SetColorEntry(16, (0, 0, 255, 255))
+    tb.SetColorEntry(17, (255, 255, 0, 255))
+    tb.SetColorEntry(18, (0, 0, 0, 255))
     return tb
 
 def get_guiyang_labelmap(): # TODO: 改变规则

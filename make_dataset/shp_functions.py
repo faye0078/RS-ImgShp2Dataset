@@ -1,6 +1,7 @@
 import os
 import glob
 import numpy as np
+import time
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
@@ -25,6 +26,7 @@ def merge_shp(shp_list, save_dir):
     # the path maybe need to be changed
     command = "ogrmerge.py -single -o {}/merged.shp ".format(shp_dir) + files_string
     print(os.popen(command).read())
+    time.sleep(1)
     return shp_dir + "/merged.shp"
 
 def trans_shp(fn):
@@ -61,24 +63,26 @@ def trans_shp(fn):
             feature.SetField('My_class', 7)
         elif DLBM in 工矿用地:
             feature.SetField('My_class', 8)
-        elif DLBM in 公共用地:
+        elif DLBM in 公共建筑:
             feature.SetField('My_class', 9)
-        elif DLBM in 城镇住宅:
+        elif DLBM in 公园绿地:
             feature.SetField('My_class', 10)
-        elif DLBM in 农村住宅:
+        elif DLBM in 城镇住宅:
             feature.SetField('My_class', 11)
-        elif DLBM in 公路用地:
+        elif DLBM in 农村住宅:
             feature.SetField('My_class', 12)
-        elif DLBM in 农村道路: 
+        elif DLBM in 公路用地:
             feature.SetField('My_class', 13)
-        elif DLBM in 河流:
+        elif DLBM in 农村道路: 
             feature.SetField('My_class', 14)
-        elif DLBM in 水库:
+        elif DLBM in 河流:
             feature.SetField('My_class', 15)
-        elif DLBM in 裸地:
+        elif DLBM in 水库:
             feature.SetField('My_class', 16)
-        else:
+        elif DLBM in 裸地:
             feature.SetField('My_class', 17)
+        else:
+            feature.SetField('My_class', 18)
             sum += 1
         layer.SetFeature(feature)
         feature = layer.GetNextFeature()

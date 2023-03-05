@@ -10,9 +10,8 @@ from clip_classify import main as clip_classify
 
 # 广州数据条件
 def guangdong():
-    
-    shp_dir = "/media/dell/DATA/wy/data/guiyang/GIM/2021/LCPA/" # the path of all shp files
-    tif_dir = '/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/' # the path of the image, which is used to create the dataset
+    shp_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/GIM/2021/LCPA/" # the path of all shp files
+    tif_dir = '/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/合并影像/西秀/2021_nir/' # the path of the image, which is used to create the dataset
     file_list = glob.glob(tif_dir + '*.tif')
     for i, file in enumerate(file_list):
         dir = file.split('/')[-1].split('.')[0]
@@ -403,7 +402,7 @@ def set_tif_color_map(tif_path):
     img_array = img_dataset.ReadAsArray()
     
     driver = gdal.GetDriverByName("GTiff")
-    dst_ds = driver.Create(tif_path.replace(".tif", "_color.tif"), img_dataset.RasterXSize, img_dataset.RasterYSize, 1, gdal.GDT_Byte)
+    dst_ds = driver.Create(tif_path.replace("西秀", "西秀_color"), img_dataset.RasterXSize, img_dataset.RasterYSize, 1, gdal.GDT_Byte)
     dst_ds.SetGeoTransform(img_dataset.GetGeoTransform())
     dst_ds.SetProjection(img_dataset.GetProjection())
     dst_ds.GetRasterBand(1).WriteArray(img_array)
@@ -449,7 +448,10 @@ if __name__ == '__main__':
     # gdal_merge_multi("/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/")
     
     # guiyang_label_trans("/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/shape_label/jianhe2021.shp")
-    # set_tif_color_map('/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/shape_label/jianhe2021_byte.tif')
+    # data_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/label/西秀"
+    # tif_list = glob.glob(data_dir + "/*.tif")
+    # for file in tif_list:
+    #     set_tif_color_map(file)
     
     # 统计数据
     # feature_count = area_features_by_field("/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/shape_label/jianhe.shp")
