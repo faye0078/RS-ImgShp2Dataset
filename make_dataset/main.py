@@ -402,7 +402,7 @@ def set_tif_color_map(tif_path):
     img_array = img_dataset.ReadAsArray()
     
     driver = gdal.GetDriverByName("GTiff")
-    dst_ds = driver.Create(tif_path.replace("西秀", "西秀_color"), img_dataset.RasterXSize, img_dataset.RasterYSize, 1, gdal.GDT_Byte)
+    dst_ds = driver.Create(tif_path.replace("/label/", "/label_color/"), img_dataset.RasterXSize, img_dataset.RasterYSize, 1, gdal.GDT_Byte)
     dst_ds.SetGeoTransform(img_dataset.GetGeoTransform())
     dst_ds.SetProjection(img_dataset.GetProjection())
     dst_ds.GetRasterBand(1).WriteArray(img_array)
@@ -415,7 +415,7 @@ if __name__ == '__main__':
     # 改变影像投影坐标
     # change_sar_srs("/media/dell/DATA/wy/data/guiyang/sar/sar/")
     # change_xixiu_srs("/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/西秀-非粮化标签10类/")
-    guangdong()
+    # guangdong()
     # guiyang()
     # guiyang_change_Li()
     # guiyang_change()
@@ -448,11 +448,11 @@ if __name__ == '__main__':
     # gdal_merge_multi("/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/")
     
     # guiyang_label_trans("/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/shape_label/jianhe2021.shp")
-    # data_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/label/西秀"
-    # tif_list = glob.glob(data_dir + "/*.tif")
-    # for file in tif_list:
-    #     set_tif_color_map(file)
-    
+    data_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/xixiu/label/"
+    tif_list = glob.glob(data_dir + "/*.tif")
+    for i, file in enumerate(tif_list):
+        set_tif_color_map(file)
+        print("finish {}/{}".format(str(i), str(len(tif_list))))
     # 统计数据
     # feature_count = area_features_by_field("/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/shape_label/jianhe.shp")
     # feature_count_1 = area_features_by_field("/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/shape_label/xixiu2021.shp")

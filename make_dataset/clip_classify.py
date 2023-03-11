@@ -1,6 +1,7 @@
 from osgeo import gdal
 from utils import *
 from raster_functions import *
+from configs import get_colormap
 import os
 import numpy as np
 import cv2
@@ -116,7 +117,7 @@ def clip_sar_image(sar_dir, img_dir, size, save_dir):
             clip_image_driver = gdal.GetDriverByName('GTiff')
             # clip_image_dataset = clip_image_driver.Create(clip_image_path, size[0], size[1], 2, gdal.GDT_Float32)
             clip_image_dataset = clip_image_driver.Create(clip_image_path, clip_image.shape[2], clip_image.shape[1], 2, gdal.GDT_Float32)
-            clip_image_dataset.SetGeoTransform((img_geo[0], img_geo[1], 0, img_geo[3], 0, img_geo[5]))
+            clip_image_dataset.SetGeoTransform((img_geo[0], sar_geo[1], 0, img_geo[3], 0, sar_geo[5]))
             clip_image_dataset.SetProjection(sar_dataset.GetProjection())
             clip_image_dataset.GetRasterBand(1).WriteArray(clip_image[0])
             clip_image_dataset.GetRasterBand(2).WriteArray(clip_image[1])
@@ -138,8 +139,8 @@ def main():
     # 需裁减的地理范围，像元大小与裁剪大小
      
      
-    area = [36527387.25, 36610929.605, 2995506.204, 2906606.027]
-    # area = [36262215.323, 36356989.263, 2949915.705, 2855935.517]
+    # area = [36527387.25, 36610929.605, 2995506.204, 2906606.027]
+    area = [36262215.323, 36356989.263, 2949915.705, 2855935.517]
     pixel_size = [0.65, -0.65]
     size = [1024, 1024]
     
@@ -151,13 +152,13 @@ def main():
     
     # 获取影像list
     img_dataset_list = None
-    img_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/合并影像/剑河/2021_nir/"
+    img_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/合并影像/西秀/2021_nir/"
     img_list = get_all_type_file(img_dir, '.tif')
     img_dataset_list = [gdal.Open(img_path) for img_path in img_list]
     
     # 获取label list
     label_dataset_list = None
-    label_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/label/剑河/"
+    label_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/label/西秀/"
     label_list = get_all_type_file(label_dir, '.tif')
     label_dataset_list = [gdal.Open(label_path) for label_path in label_list]
     
@@ -184,7 +185,7 @@ def main():
                 continue
             
             # 保存裁剪后的影像
-            save_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/"
+            save_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/xixiu/"
             save_img_path = os.path.join(save_dir, "image", "{}_{}_image.tif".format(i, j))
             if not os.path.exists(os.path.join(save_dir, "image")):
                 os.makedirs(os.path.join(save_dir, "image"))
@@ -205,7 +206,7 @@ def main():
             
             dst_ds = driver.Create(save_label_path, size[0], size[1], 1, gdal.GDT_Byte)
             dst_ds.GetRasterBand(1).WriteArray(label)
-            color_table = get_label1_color_table()
+            color_table = get_colormap()
             dst_ds.SetGeoTransform([x, pixel_size[0], 0, y, 0, pixel_size[1]])
             dst_ds.SetProjection(img_dataset_list[0].GetProjection())
             dst_ds.GetRasterBand(1).SetRasterColorTable(color_table)
@@ -217,5 +218,5 @@ def main():
     print("all_clipped_num: ", all_clipped_num)
     
 if __name__ == "__main__":
-    main()
-    # clip_sar_image("/media/dell/DATA/wy/data/guiyang/sar/剑河/2021/","/media/dell/DATA/wy/data/guiyang/数据集/v3/分类/剑河/image/", [1024, 1024], "/media/dell/DATA/wy/data/guiyang/数据集/v3/分类/剑河/sar/")
+    # main()
+    clip_sar_image("/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/sar/剑河/2021/","/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/jianhe/image/", [1024, 1024], "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/jianhe/sar/")
