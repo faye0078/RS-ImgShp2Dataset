@@ -45,48 +45,84 @@ def trans_shp(fn):
         layer.CreateField(newField)
     while feature:
         DLBM = feature.GetField('DLBM')
-        if DLBM in 水田:
+        # if DLBM in 水田:
+        #     feature.SetField('My_class', 0)
+        # elif DLBM in 旱地:
+        #     feature.SetField('My_class', 1)
+        # elif DLBM in 果园:
+        #     feature.SetField('My_class', 2)
+        # elif DLBM in 茶园:
+        #     feature.SetField('My_class', 3)
+        # elif DLBM in 乔木林地:
+        #     feature.SetField('My_class', 4)
+        # elif DLBM in 灌木林地:
+        #     feature.SetField('My_class', 5)
+        # elif DLBM in 苗圃:
+        #     feature.SetField('My_class', 6)
+        # elif DLBM in 草地:
+        #     feature.SetField('My_class', 7)
+        # elif DLBM in 工矿用地:
+        #     feature.SetField('My_class', 8)
+        # elif DLBM in 公共建筑:
+        #     feature.SetField('My_class', 9)
+        # elif DLBM in 城镇住宅:
+        #     feature.SetField('My_class', 10)
+        # elif DLBM in 农村住宅:
+        #     feature.SetField('My_class', 11)
+        # elif DLBM in 公路用地:
+        #     feature.SetField('My_class', 12)
+        # elif DLBM in 农村道路: 
+        #     feature.SetField('My_class', 13)
+        # elif DLBM in 河流:
+        #     feature.SetField('My_class', 14)
+        # elif DLBM in 裸地:
+        #     feature.SetField('My_class', 15)
+        # else:
+        #     feature.SetField('My_class', 16)
+        #     sum += 1
+        if DLBM in 田地:
             feature.SetField('My_class', 0)
-        elif DLBM in 旱地:
+        elif DLBM in 园地:
             feature.SetField('My_class', 1)
-        elif DLBM in 果园:
+        elif DLBM in 林地:
             feature.SetField('My_class', 2)
-        elif DLBM in 茶园:
+        elif DLBM in 建筑用地:
             feature.SetField('My_class', 3)
-        elif DLBM in 乔木林地:
+        elif DLBM in 道路:
             feature.SetField('My_class', 4)
-        elif DLBM in 灌木林地:
+        elif DLBM in 水体:
             feature.SetField('My_class', 5)
-        elif DLBM in 苗圃:
-            feature.SetField('My_class', 6)
-        elif DLBM in 草地:
-            feature.SetField('My_class', 7)
-        elif DLBM in 工矿用地:
-            feature.SetField('My_class', 8)
-        elif DLBM in 公共建筑:
-            feature.SetField('My_class', 9)
-        elif DLBM in 公园绿地:
-            feature.SetField('My_class', 10)
-        elif DLBM in 城镇住宅:
-            feature.SetField('My_class', 11)
-        elif DLBM in 农村住宅:
-            feature.SetField('My_class', 12)
-        elif DLBM in 公路用地:
-            feature.SetField('My_class', 13)
-        elif DLBM in 农村道路: 
-            feature.SetField('My_class', 14)
-        elif DLBM in 河流:
-            feature.SetField('My_class', 15)
-        elif DLBM in 水库:
-            feature.SetField('My_class', 16)
-        elif DLBM in 裸地:
-            feature.SetField('My_class', 17)
         else:
-            feature.SetField('My_class', 18)
+            feature.SetField('My_class', 6)
             sum += 1
         layer.SetFeature(feature)
         feature = layer.GetNextFeature()
     print(sum)
+    return
+
+def trans_shp_all_class(fn):
+    """create a new feature depending on the 'CC' field
+
+    Args:
+        fn (function): _description_
+    """
+    driver = ogr.GetDriverByName("ESRI Shapefile")
+    dataSource = driver.Open(fn, 1)
+    layer = dataSource.GetLayer()
+    feature = layer.GetNextFeature()
+    newField = ogr.FieldDefn('My_class', ogr.OFTInteger)
+    if layer.GetLayerDefn().GetFieldIndex('My_class') == -1:
+        layer.CreateField(newField)
+    while feature:
+        DLBM = feature.GetField('DLBM')
+        if DLBM not in CORRESPOND:
+            code = 56
+        else:
+            code = CORRESPOND_LABEL[CORRESPOND[DLBM]]
+
+        feature.SetField('My_class', code)
+        layer.SetFeature(feature)
+        feature = layer.GetNextFeature()
     return
 
 def shp2raster(shapename, output_raster, pixel_size, colormap=None):
@@ -115,7 +151,7 @@ def shp2raster(shapename, output_raster, pixel_size, colormap=None):
     band = new_raster.GetRasterBand(1)
     ct = colormap
 
-    band.SetRasterColorTable(ct)
+    # band.SetRasterColorTable(ct)
     band.SetNoDataValue(255)
     band.FlushCache()
     gdal.RasterizeLayer(new_raster, [1], shp_layer, options=["Attribute=My_class"])
