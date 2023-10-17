@@ -11,8 +11,8 @@ def caculate_all_label_distribution(img_dir):
     return all_dis
 
 if __name__ == '__main__':
-    jianhe = caculate_all_label_distribution("/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/label/")
-    xixiu = caculate_all_label_distribution("/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/xixiu/label/")
+    jianhe = caculate_all_label_distribution("/media/dell/DATA/wy/data/guiyang/数据集/v2/分类/剑河/label3/")
+    xixiu = caculate_all_label_distribution("/media/dell/DATA/wy/data/guiyang/数据集/v2/分类/西秀/label3/")
     all = jianhe+xixiu
     print(all)
     sum = 0

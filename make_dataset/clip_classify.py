@@ -134,7 +134,59 @@ def clip_sar_image(sar_dir, img_dir, size, save_dir):
             for file in files:
                 if file.split('_')[0] == index:
                     os.remove(os.path.join(dir, file))
+                    
+def clip_label_image(label_path, img_dir, size, save_dir):
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    sar_dataset = gdal.Open(label_path)
     
+    img_list = get_all_type_file(img_dir, '.tif')
+    error_list = []
+    
+    for j, img_path in enumerate(img_list):
+        img_dataset = gdal.Open(img_path)
+        img_geo = img_dataset.GetGeoTransform()
+        sar_geo = sar_dataset.GetGeoTransform()
+        img_extent = [img_geo[0], img_geo[0] + img_geo[1] * img_dataset.RasterXSize, img_geo[3], img_geo[3] + img_geo[5] * img_dataset.RasterYSize]
+        # 计算裁剪范围
+        x_min = int((img_extent[0] - sar_geo[0]) / sar_geo[1])
+        y_min = int((img_extent[2] - sar_geo[3]) / sar_geo[5])
+        x_max = int((img_extent[1] - sar_geo[0]) / sar_geo[1])
+        y_max = int((img_extent[3] - sar_geo[3]) / sar_geo[5])
+        # 裁剪影像
+        clip_image = sar_dataset.ReadAsArray(x_min, y_min, x_max - x_min, y_max - y_min)
+        if clip_image is None:
+            if img_path not in error_list:
+                error_list.append(img_path)
+            continue
+        label3 = cv2.resize(clip_image, (size[0], size[1]), interpolation=cv2.INTER_NEAREST)
+        label_zeros = np.zeros((size[0], size[1]), dtype=np.uint8)
+        label_zeros[label3==9] = 1
+        label_zeros[label3==10] = 2
+        label_zeros[label3==11] = 3
+        label_zeros[label3==1] = 4
+        label_zeros[label3==2] = 5
+        label_zeros[label3==3] = 6
+        label_zeros[label3==4] = 7
+        label_zeros[label3==5] = 7
+        label_zeros[label3==6] = 8
+        label_zeros[label3==7] = 9
+        label_zeros[label3==8] = 10
+        # 保存裁剪影像
+        clip_image_path = os.path.join(save_dir, os.path.basename(img_list[j]).replace("image", "label3"))
+        clip_image_driver = gdal.GetDriverByName('GTiff')
+        # clip_image_dataset = clip_image_driver.Create(clip_image_path, size[0], size[1], 2, gdal.GDT_Float32)
+        clip_image_dataset = clip_image_driver.Create(clip_image_path, label3.shape[1], label3.shape[0], 1, gdal.GDT_Byte)
+        ct = get_label3_color_table()
+        clip_image_dataset.GetRasterBand(1).SetRasterColorTable(ct)
+        clip_image_dataset.SetGeoTransform((img_geo[0], img_geo[1], 0, img_geo[3], 0, img_geo[5]))
+        clip_image_dataset.SetProjection(img_dataset.GetProjection())
+        clip_image_dataset.GetRasterBand(1).WriteArray(label_zeros)
+        clip_image_dataset.FlushCache()
+        clip_image_dataset = None
+        print("finished {}/{}".format(j + 1, len(img_list)))
+    print(error_list)
+
 def main():
     # 需裁减的地理范围，像元大小与裁剪大小
      
@@ -219,4 +271,4 @@ def main():
     
 if __name__ == "__main__":
     # main()
-    clip_sar_image("/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/sar/剑河/2021/","/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/jianhe/image/", [1024, 1024], "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/jianhe/sar/")
+    clip_label_image("/media/dell/DATA/wy/data/guiyang/标签/粮用/西秀粮用地多类别标签.tif","/media/dell/DATA/wy/data/guiyang/数据集/v2/分类/西秀/image/", [1024, 1024], "/media/dell/DATA/wy/data/guiyang/数据集/v2/分类/西秀/new_label3/")
