@@ -59,7 +59,7 @@ def clip_mask_by_img(img_name, mask_name):
         img_name (str): the path of the image
         mask_name (str): the path of the mask
     """    
-    clip_mask_name = mask_name.replace(".tif", "_clip.tif")
+    clip_mask_name = os.path.join(os.path.dirname(mask_name), os.path.basename(img_name))
     img_dataset = gdal.Open(img_name)
     img_geo = img_dataset.GetGeoTransform()
     img_extent = [img_geo[0], img_geo[0] + img_geo[1] * img_dataset.RasterXSize, img_geo[3] + img_geo[5] * img_dataset.RasterYSize, img_geo[3]]
@@ -334,6 +334,15 @@ def png2tif(img_path):
     trans_command = "gdal_translate -a_srs EPSG:4524 -of GTiff {} {}".format(img_path, output_path)
     print(os.popen(trans_command).read())
     
+def img2tif(img_dir, save_dir):
+    img_list = glob.glob(os.path.join(img_dir, "*.img"))
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    for img_path in img_list:
+        save_path = os.path.join(save_dir, os.path.basename(img_path).replace(".img", ".tif"))
+        trans_command = "gdal_translate -a_srs EPSG:4524 -tr 0.65 0.65 -of GTiff {} {}".format(img_path, save_path)
+        os.system(trans_command)
+    
 def gdal_merge_multi(tif_dir):
     tif_list = glob.glob(os.path.join(tif_dir, "*.tif"))
     tif_list = " ".join(tif_list)
@@ -343,3 +352,33 @@ def gdal_merge_multi(tif_dir):
 def gdal_swarp_to_4524(tif_path, result_path):
     swarp_command = "gdalwarp -t_srs EPSG:4524 -tr 0.65 0.65 -of GTiff {} {}".format(tif_path, result_path)
     os.system(swarp_command)
+    
+def get_extent_from_folder(folder_path):
+    """
+    从指定文件夹中获取所有TIFF图像的范围，返回一个extent数组。
+    """
+    # 设置工作目录
+    os.chdir(folder_path)
+
+    # 获取所有TIFF文件名
+    tiff_files = [f for f in os.listdir(".") if f.endswith(".tif") or f.endswith(".tif")]
+
+    # 创建extent数组
+    extent_array = []
+
+    # 循环遍历每个TIFF文件，获取范围并添加到extent数组
+    for tiff_file in tiff_files:
+        ds = gdal.Open(tiff_file)
+        # 获取左上角和右下角坐标
+        ulx, xres, xskew, uly, yskew, yres = ds.GetGeoTransform()
+        lrx = ulx + (ds.RasterXSize * xres)
+        lry = uly + (ds.RasterYSize * yres)
+        # 将范围添加到extent数组
+        extent_array.append([ulx, lry, lrx, uly])
+
+    # 返回extent数组
+    return extent_array
+
+if __name__ == "__main__":
+    get_extent_from_folder("/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/合并影像/全省/2021_nir/")
+    

@@ -11,11 +11,13 @@ from clip_classify import main as clip_classify
 # 广州数据条件
 def guangdong():
     shp_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/GIM/2021/LCPA/" # the path of all shp files
-    tif_dir = '/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/合并影像/西秀/2021_nir/' # the path of the image, which is used to create the dataset
+    tif_dir = '/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/合并影像/全省/2021_nir/' # the path of the image, which is used to create the dataset
     file_list = glob.glob(tif_dir + '*.tif')
     for i, file in enumerate(file_list):
-        dir = file.split('/')[-1].split('.')[0]
-        if os.path.exists(os.path.join(shp_dir, dir, "merged_clip.tif")):
+        # if not os.path.basename(file).endswith('9757F.tif'):
+        #     continue
+        dir = "".join(file.split('/')[-1].split('.')[:-1])
+        if os.path.exists(os.path.join(shp_dir, dir, os.path.basename(file))):
             continue
         print("begin:{} {}/{}".format(file, str(i), str(len(file_list))))
         # 查询覆盖的shp
@@ -23,25 +25,26 @@ def guangdong():
         shp_list, pixel_size = search_shp_by_raster(file, shp_dir)
         if len(shp_list) == 0:
             print("mistake appear: no shp file is found")
-            exit(0)
+            continue
         print("finish search")
         
         # 合并覆盖shp
         print("2.begin merge shp")
-        file_name = file.split("/")[-1].split(".")[0]
+        file_name = "".join(file.split('/')[-1].split('.')[:-1])
         shp_file = merge_shp(shp_list, file_name)
         print("finish merge shp")
         
         # 类别转换
         print("3.begin translate shp")
         trans_shp(shp_file)
+        # trans_shp_all_class(shp_file)
         print("finish translate shp")
         
         # shp转栅格
         print("4.begin shp2raster")
         output_raster = shp_file.split(".")[0] + '.tif'
         colormap = get_colormap()
-        shp2raster(shp_file, output_raster, pixel_size, colormap)
+        shp2raster(shp_file, output_raster, pixel_size, colormap, )
         print("finish shp2raster")
         
         # 裁剪
@@ -304,10 +307,8 @@ def add_nir_channel(rgb_path, nir_path, save_dir):
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     for file in glob.glob(rgb_path):
-        if not file.endswith("JL14.tif"):
-            continue
         print("begin: {}".format(file))
-        nir_file = os.path.join(nir_path, os.path.basename(file).replace(".tif", ".png"))
+        nir_file = os.path.join(nir_path, os.path.basename(file))
         img_dataset = gdal.Open(file)
         img_array = img_dataset.ReadAsArray()
         nir_dataset = gdal.Open(nir_file)
@@ -441,18 +442,18 @@ if __name__ == '__main__':
     # clip_xixiu("/media/dell/DATA/wy/data/guiyang/原始影像/西秀/2022/warp/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022/", "/media/dell/DATA/wy/data/guiyang/RGB影像/西秀/2022_clip/")
     
     # 通道叠加
-    # add_nir_channel("/media/dell/DATA/wy/data/guiyang/RGB影像/剑河/2021/", "/media/dell/DATA/wy/data/guiyang/原始影像/剑河/2021/", save_dir="/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/")
+    # add_nir_channel("/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/RGB/", "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/IMG/", save_dir="/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/合并影像/全省/2021_nir/")
     
     # 裁剪分类数据
     # clip_classify
     # gdal_merge_multi("/media/dell/DATA/wy/data/guiyang/合并影像/剑河/2021_nir/")
     
     # guiyang_label_trans("/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/shape_label/jianhe2021.shp")
-    data_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/xixiu/label/"
-    tif_list = glob.glob(data_dir + "/*.tif")
-    for i, file in enumerate(tif_list):
-        set_tif_color_map(file)
-        print("finish {}/{}".format(str(i), str(len(tif_list))))
+    # data_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/数据集/v1/xixiu/label/"
+    # tif_list = glob.glob(data_dir + "/*.tif")
+    # for i, file in enumerate(tif_list):
+    #     set_tif_color_map(file)
+    #     print("finish {}/{}".format(str(i), str(len(tif_list))))
     # 统计数据
     # feature_count = area_features_by_field("/media/dell/DATA/wy/data/guiyang/标签/分类/剑河/shape_label/jianhe.shp")
     # feature_count_1 = area_features_by_field("/media/dell/DATA/wy/data/guiyang/标签/分类/西秀/shape_label/xixiu2021.shp")
@@ -469,5 +470,11 @@ if __name__ == '__main__':
     #     else:
     #         chinese_count[chinese_index] += count[index] * 1000000
     # print(chinese_count)
+    
+    # img2tif
+    img_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/2021年/"
+    save_dir = "/mnt/bee9bc2f-b897-4648-b8c4-909715332cb4/wy/data/guiyang/2021年_tif/"
+    img2tif(img_dir, save_dir)
+    
 
     
