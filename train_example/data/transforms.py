@@ -216,6 +216,8 @@ class ToTensor(object):
         
         if "image" in sample:
             image = sample["image"]
+            if len(image.shape) == 2:
+                image = image[:, :, np.newaxis]
             image = image.transpose((2, 0, 1))
         # swap color axis because
         # numpy image: H x W x C

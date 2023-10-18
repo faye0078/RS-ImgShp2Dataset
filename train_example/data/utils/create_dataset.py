@@ -96,8 +96,22 @@ def make_guangdong_list(dir):
                     print(i)
     df = pd.DataFrame(file_list, columns=['one'])
     df.to_csv("F:/WHU_WY/LightRS/data/list/split/guangdong_val.lst", columns=['one'], index=False, header=False)
+    
+def make_guiyang_vege_list(dir):
+    file_list = []
+    i = 0
+    for dirpath, dirnames, filenames in os.walk(dir):
+        if len(filenames) != 0:
+            for filename in filenames:
+                name = os.path.join(dirpath, filename)
+                # label_name = name.replace('image_', '_label_').replace('_img', '_label').replace('.tif', '.png')
+                label_name = name.replace('gray', 'vege_lc')
+                file_list.append(name + '\t' + label_name)
+    df = pd.DataFrame(file_list, columns=['one'])
+    df.to_csv("/media/dell/DATA/wy/code/rs-imgshp2dataset/train_example/data/list/split/guiyang_vege_test.lst", columns=['one'], index=False, header=False)
 
-make_guangdong_list("F:/WHU_WY/data/512/image/val/")
+# make_guangdong_list("F:/WHU_WY/data/512/image/val/")
+make_guiyang_vege_list("/media/dell/DATA/wy/data/guiyang/guizhou_dataset/test/gray/")
 # changeFile()
 # gid2Vege('/media/dell/DATA/wy/data/GID-15/GID/label')
 # make_concat_lst("/media/dell/DATA/wy/data/gid-15/GID/img_dir/val/")

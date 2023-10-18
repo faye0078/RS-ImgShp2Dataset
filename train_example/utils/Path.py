@@ -29,6 +29,12 @@ def get_train_path(dataset):
     elif dataset == 'Guangzhou':
         Path = OrderedDict()
         Path["wangyu"] = 'wangyu'
+    elif dataset == 'Guiyang_vege':
+        Path = OrderedDict()
+        Path['dir'] = ""
+        Path['train_list'] = "/media/dell/DATA/wy/code/rs-imgshp2dataset/train_example/data/list/split/guiyang_vege_train.lst"
+        Path['val_list'] = "/media/dell/DATA/wy/code/rs-imgshp2dataset/train_example/data/list/split/guiyang_vege_val.lst"
+        Path['test_list'] = "/media/dell/DATA/wy/code/rs-imgshp2dataset/train_example/data/list/split/guiyang_vege_val.lst"
     return Path
 
 def get_predict_path(dataset, mode):

@@ -25,7 +25,8 @@ def main():
     # trainer.select_confidence_data()
     for epoch in range(trainer.start_epoch, trainer.args.epochs):
         trainer.training(epoch)
-        trainer.validation(epoch)
+        if epoch % 5 == 0 and epoch > 30:
+            trainer.validation(epoch)
         # trainer.test_model(epoch)
 
 

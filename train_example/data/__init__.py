@@ -1,6 +1,7 @@
 from data.GID_Vege_3bands import GIDVege3
 from data.GID_Vege_4bands import GIDVege4
 from data.GID_Vege_5bands import GIDVege5
+from data.guiyang_vege import Guiyang_vege
 from data.guangdong_train import Guangdong_train
 from data.guangdong import Guangdong
 from torch.utils.data import DataLoader, random_split
@@ -27,22 +28,30 @@ def make_train_loader(args, **kwargs):
         Dataset = GIDVege5
     elif args.dataset == 'Guangdong_train':
         Dataset = Guangdong_train
+    elif args.dataset == 'Guiyang_vege':
+        Dataset = Guiyang_vege
 
     composed_trn = transforms.Compose(
         [
             RandomMirror(),
             ResizeScale(resize_side=0, low_scale=0.8, high_scale=1.2),
-            CentralCrop(400),
+            RandomCrop(512),
             ToTensor(),
         ]
     )
     composed_val = transforms.Compose(
         [
+            RandomMirror(),
+            ResizeScale(resize_side=0, low_scale=0.8, high_scale=1.2),
+            RandomCrop(512),
             ToTensor(),
         ]
     )
     composed_test = transforms.Compose(
         [
+            RandomMirror(),
+            ResizeScale(resize_side=0, low_scale=0.8, high_scale=1.2),
+            RandomCrop(512),
             ToTensor(),
         ])
     if args.nas == 'search':
@@ -80,6 +89,7 @@ def make_train_loader(args, **kwargs):
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False, **kwargs)
     if args.nas == 'train':
         test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, **kwargs)
+        
         print(" Created train set = {}, val set = {} examples, test set = {} examples".format(len(train_set), len(val_set), len(test_set)))
         return train_loader, val_loader, test_loader
     elif args.nas == 'search':

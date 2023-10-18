@@ -3,7 +3,7 @@ import numpy as np
 
 def obtain_retrain_args():
     parser = argparse.ArgumentParser(description="ReTrain the nas model")
-    parser.add_argument('--dataset', type=str, default='Guangdong_train', choices=['GID-Vege3', 'GID-Vege4', 'GID-Vege5', 'Guangdong_train'], help='dataset name (default: pascal)')
+    parser.add_argument('--dataset', type=str, default='Guiyang_vege', choices=['GID-Vege3', 'GID-Vege4', 'GID-Vege5', 'Guangdong_train', 'Guiyang_vege'], help='dataset name (default: pascal)')
     parser.add_argument('--model_name', type=str, default='fast-nas', choices=['hrnet', 'flexinet', 'fast-nas', 'PIDNet'], help='the model name')
     parser.add_argument('--nas', type=str, default='train', choices=['search', 'train'])
     parser.add_argument('--workers', type=int, default=4, metavar='N', help='dataloader threads')
@@ -11,7 +11,7 @@ def obtain_retrain_args():
     parser.add_argument('--checkname', type=str, default='fast-nas_new_val', help='set the checkpoint name')
     parser.add_argument('--epochs', type=int, default=200, metavar='N', help='number of epochs to train (default: auto)')
     parser.add_argument('--num_worker', type=int, default=4, metavar='N', help='numer workers')
-    parser.add_argument('--batch-size', type=int, default=32, metavar='N', help='input batch size for training (default: auto)')
+    parser.add_argument('--batch-size', type=int, default=16, metavar='N', help='input batch size for training (default: auto)')
     parser.add_argument('--nclass', type=int, default=3,help='number of class')
 
     parser.add_argument('--affine', default=False, type=bool, help='whether use affine in BN')
