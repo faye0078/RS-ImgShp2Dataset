@@ -1,7 +1,7 @@
 import torch
 import torchvision
 import os
-from model.HRNet import get_seg_model
+# from model.HRNet import get_seg_model
 from model.make_fast_nas import fastNas
 from utils.config import obtain_retrain_args
 # An instance of your model.
@@ -9,10 +9,12 @@ from utils.config import obtain_retrain_args
 args = obtain_retrain_args()
 # args.dataset = "GID-Vege5"
 
-model = get_seg_model(args)
+# model = get_seg_model(args)
+model = fastNas()
+model.load_state_dict(torch.load(args.resume)['state_dict'])
 
 # An example input you would normally provide to your model's forward() method.
-example = torch.rand(1, 5, 512, 512)
+example = torch.rand(1, 1, 512, 512)
 
 # Use torch.jit.trace to generate a torch.jit.ScriptModule via tracing.
 traced_script_module = torch.jit.trace(model, example)
@@ -22,4 +24,4 @@ traced_script_module = torch.jit.trace(model, example)
 
 if not os.path.exists("./export_model/" + args.dataset):
     os.makedirs("./export_model/" + args.dataset)
-traced_script_module.save("./export_model/" + args.dataset + "/traced_hrnet_model.pt")
+traced_script_module.save("./export_model/" + args.dataset + "/traced_fastnas_model.pt")

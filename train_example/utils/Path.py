@@ -65,8 +65,13 @@ def get_predict_path(dataset, mode):
         # Path['nas_val_list'] = "./data/lists/GID/mini_rs_val.lst"
     elif dataset == 'Guangdong':
         Path = OrderedDict()
-        Path['dir'] = "F:/WHU_WY/LightRS/data/"
-        Path["predict_list"] = "./data/list/concat/guangdong_predict.lst" # TODO:路径
+        Path['dir'] = ""
+        Path["predict_list"] = "/media/dell/DATA/wy/code/rs-imgshp2dataset/train_example/data/list/concat/guangdong_vege.lst" # TODO:路径
+    
+    elif dataset == 'Guiyang_vege':
+        Path = OrderedDict()
+        Path['dir'] = ""
+        Path['predict_list'] = "/media/dell/DATA/wy/code/rs-imgshp2dataset/train_example/data/list/split/guiyang_vege_predict.lst"
 
     return Path
 #

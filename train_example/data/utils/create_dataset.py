@@ -106,9 +106,9 @@ def make_guiyang_vege_list(dir):
                 name = os.path.join(dirpath, filename)
                 # label_name = name.replace('image_', '_label_').replace('_img', '_label').replace('.tif', '.png')
                 label_name = name.replace('gray', 'vege_lc')
-                file_list.append(name + '\t' + label_name)
+                file_list.append(name)
     df = pd.DataFrame(file_list, columns=['one'])
-    df.to_csv("/media/dell/DATA/wy/code/rs-imgshp2dataset/train_example/data/list/split/guiyang_vege_test.lst", columns=['one'], index=False, header=False)
+    df.to_csv("/media/dell/DATA/wy/code/rs-imgshp2dataset/train_example/data/list/split/guiyang_vege_predict.lst", columns=['one'], index=False, header=False)
 
 # make_guangdong_list("F:/WHU_WY/data/512/image/val/")
 make_guiyang_vege_list("/media/dell/DATA/wy/data/guiyang/guizhou_dataset/test/gray/")

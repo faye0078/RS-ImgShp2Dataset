@@ -168,8 +168,8 @@ class Predictor(object):
         Path = get_predict_path("Guangdong", None)
         data_file = Path["predict_list"]
         data_dir = Path["dir"]
-        mean = (0.5, 0.5, 0.5)
-        std = (0.25, 0.25, 0.25)
+        mean = (0.5)
+        std = (0.25)
         self.model.eval()
         with open(data_file, "rb") as f:
             datalist = f.readlines()
@@ -186,6 +186,7 @@ class Predictor(object):
                 transform = dataset.GetGeoTransform()  # 仿射矩阵
                 projection = dataset.GetProjection()  # 地图投影信息
                 image = dataset.ReadAsArray(0, 0, im_width, im_height)  # 将数据写成数组，对应栅格矩阵
+                image = image[np.newaxis, ...]
                 image = image.transpose(1, 2, 0)
                 image = image / 255.0  # TODO：这里是否需要除什么？
                 image = image - mean
@@ -224,10 +225,10 @@ class Predictor(object):
                 print("data process finish")
                 print("begin data write")
 
-                image = dataset.ReadAsArray(0, 0, im_width,im_height)
-                image = image.transpose(1,2,0)
-                image = image.dot(np.array([65536, 256, 1], dtype=np.uint32))
-                pred[image == 0] = 3
+                # image = dataset.ReadAsArray(0, 0, im_width,im_height)
+                # image = image.transpose(1,2,0)
+                # image = image.dot(np.array([65536, 256, 1], dtype=np.uint32))
+                # pred[image == 0] = 3
                 lut = get_GID_vege_lut()
                 name = os.path.join(self.saver.experiment_dir, data_path[0].split('/')[-1])
                 img_array_to_raster_(name, pred, 1, transform, projection, lut)
